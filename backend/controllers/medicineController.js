@@ -41,3 +41,18 @@ exports.toggleTaken = async (req, res) => {
     res.status(500).json({ message: "Error updating status" });
   }
 };
+
+exports.deleteMedicine = async (req, res) => {
+  try {
+    const medicine = await Medicine.findById(req.params.id);
+    if (!medicine) return res.status(404).json({ message: "Medicine not found" });
+    if (medicine.patient.toString() !== req.user.id) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    await medicine.deleteOne();
+    res.status(200).json({ message: "Medicine removed" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error during deletion" });
+  }
+};

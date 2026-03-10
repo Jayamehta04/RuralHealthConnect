@@ -152,18 +152,34 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* WELLNESS / MEDICINE SECTION */}
+      {/* WELLNESS / HEALTH SERVICES SECTION */}
       <View style={styles.wellnessContainer}>
+        {/* Medicine Vault Card */}
         <TouchableOpacity 
-          style={styles.medicineCard} 
+          style={styles.wellnessCard} 
           onPress={() => navigation.navigate('MedicineVault')}
         >
-          <View style={styles.iconCircle}>
-            <Text style={{fontSize: 24}}>💊</Text>
+          <View style={[styles.iconCircle, { backgroundColor: '#e8f5e9' }]}>
+            <Text style={{fontSize: 22}}>💊</Text>
           </View>
-          <View style={styles.medicineTextContainer}>
+          <View style={styles.wellnessTextContainer}>
             <Text style={styles.cardTitle}>Medicine Vault</Text>
             <Text style={styles.cardSub}>Track your daily dosage</Text>
+          </View>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+
+        {/* Medicine Store Card */}
+        <TouchableOpacity 
+          style={[styles.wellnessCard, { marginTop: 12 }]} 
+          onPress={() => navigation.navigate('Pharmacy')}
+        >
+          <View style={[styles.iconCircle, { backgroundColor: '#e1f5fe' }]}>
+            <Text style={{fontSize: 22}}>🛒</Text>
+          </View>
+          <View style={styles.wellnessTextContainer}>
+            <Text style={styles.cardTitle}>Order Medicines</Text>
+            <Text style={styles.cardSub}>Home delivery for rural areas</Text>
           </View>
           <Text style={styles.arrow}>→</Text>
         </TouchableOpacity>
@@ -215,7 +231,6 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: '#ef4444', fontWeight: 'bold', fontSize: 13 },
   
-  // Action Buttons Container
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -247,12 +262,12 @@ const styles = StyleSheet.create({
   actionSubtext: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '600', marginTop: 2 },
 
   // Wellness Container Styles
-  wellnessContainer: { paddingHorizontal: 16, marginBottom: 8 },
-  medicineCard: { 
+  wellnessContainer: { paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
+  wellnessCard: { 
     backgroundColor: '#fff', 
     flexDirection: 'row', 
     alignItems: 'center', 
-    padding: 18, 
+    padding: 16, 
     borderRadius: 20, 
     elevation: 3,
     shadowColor: '#000',
@@ -260,18 +275,17 @@ const styles = StyleSheet.create({
     shadowRadius: 10
   },
   iconCircle: { 
-    backgroundColor: '#e8f5e9', 
-    width: 50, 
-    height: 50, 
-    borderRadius: 25, 
+    width: 46, 
+    height: 46, 
+    borderRadius: 23, 
     justifyContent: 'center', 
     alignItems: 'center', 
     marginRight: 15 
   },
-  medicineTextContainer: { flex: 1 },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
-  cardSub: { fontSize: 13, color: '#64748b' },
-  arrow: { fontSize: 20, color: '#cbd5e1', fontWeight: 'bold' },
+  wellnessTextContainer: { flex: 1 },
+  cardTitle: { fontSize: 17, fontWeight: 'bold', color: '#1e293b' },
+  cardSub: { fontSize: 12, color: '#64748b' },
+  arrow: { fontSize: 18, color: '#cbd5e1', fontWeight: 'bold' },
   
   listTitle: { fontSize: 16, fontWeight: '700', color: '#64748b', marginTop: 16, marginBottom: 12, marginLeft: 20 },
   list: { paddingHorizontal: 16, paddingBottom: 20 },

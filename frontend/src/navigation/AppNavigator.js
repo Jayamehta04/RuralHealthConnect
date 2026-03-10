@@ -12,6 +12,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import AmbulanceScreen from '../screens/AmbulanceScreen'; 
 import MedicineScreen from '../screens/MedicineScreen';
 import AddMedicineScreen from '../screens/AddMedicineScreen';
+import PharmacyScreen from '../screens/PharmacyScreen';
 
 const Stack = createStackNavigator();
 
@@ -32,6 +33,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Ambulance" component={AmbulanceScreen} options={{ title: 'Emergency Transport' }} />
             <Stack.Screen name="MedicineVault" component={MedicineScreen} options={{ title: 'My Medicine Vault' }} />
             <Stack.Screen name="AddMedicine" component={AddMedicineScreen} options={{ title: 'Add Medicine' }} />
+            <Stack.Screen name="Pharmacy" component={PharmacyScreen} options={{ title: 'Medicine Store' }} />
           </>
         )
       ) : (

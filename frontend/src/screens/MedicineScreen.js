@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  FlatList, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert 
+} from 'react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useIsFocused } from '@react-navigation/native'; 
@@ -21,7 +29,7 @@ const MedicineScreen = ({ navigation }) => {
       });
       setMedicines(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Meds Error:", err);
     } finally {
       setLoading(false);
     }
@@ -38,10 +46,37 @@ const MedicineScreen = ({ navigation }) => {
     }
   };
 
+  // --- DELETE LOGIC ---
+  const confirmDelete = (id) => {
+    Alert.alert(
+      "Remove Medicine",
+      "Are you sure you want to delete this reminder permanently?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await axios.delete(`http://192.168.29.214:5000/api/medicines/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              fetchMedicines(); // Refresh list after deletion
+            } catch (err) {
+              Alert.alert("Error", "Could not delete medicine.");
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderMed = ({ item }) => (
     <TouchableOpacity 
       style={[styles.card, item.isTaken && styles.cardTaken]} 
       onPress={() => handleToggle(item._id)}
+      onLongPress={() => confirmDelete(item._id)} // Trigger delete on long press
+      delayLongPress={500} // Half a second hold required
     >
       <View style={styles.timeBox}>
         <Text style={[styles.timeText, item.isTaken && styles.textTaken]}>{item.time}</Text>
@@ -59,7 +94,7 @@ const MedicineScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>Medicine Vault</Text>
-      <Text style={styles.headerSub}>Tap a medicine to mark as taken</Text>
+      <Text style={styles.headerSub}>Tap to toggle taken • Hold to delete</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#2ecc71" />
