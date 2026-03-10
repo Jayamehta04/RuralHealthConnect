@@ -18,6 +18,7 @@ app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/emergency', require('./routes/emergencyRoutes'));
 app.use('/api/ambulance', require('./routes/ambulanceRoutes'));
+app.use('/api/medicines', require('./routes/medicineRoutes'));
 
 // Basic Route for testing
 app.get('/', (req, res) => {

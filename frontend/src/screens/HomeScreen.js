@@ -118,6 +118,7 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
+      {/* HEADER SECTION */}
       <View style={styles.header}>
         <View>
           <Text style={styles.welcomeText}>Hello, {user?.name || 'User'}</Text>
@@ -148,6 +149,23 @@ const HomeScreen = ({ navigation }) => {
         >
           <Text style={styles.ambulanceText}>AMBULANCE</Text>
           <Text style={styles.actionSubtext}>Request Transport</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* WELLNESS / MEDICINE SECTION */}
+      <View style={styles.wellnessContainer}>
+        <TouchableOpacity 
+          style={styles.medicineCard} 
+          onPress={() => navigation.navigate('MedicineVault')}
+        >
+          <View style={styles.iconCircle}>
+            <Text style={{fontSize: 24}}>💊</Text>
+          </View>
+          <View style={styles.medicineTextContainer}>
+            <Text style={styles.cardTitle}>Medicine Vault</Text>
+            <Text style={styles.cardSub}>Track your daily dosage</Text>
+          </View>
+          <Text style={styles.arrow}>→</Text>
         </TouchableOpacity>
       </View>
       
@@ -202,6 +220,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
+    paddingBottom: 8,
   },
   sosButton: {
     backgroundColor: '#e74c3c',
@@ -226,9 +245,36 @@ const styles = StyleSheet.create({
   sosText: { color: '#fff', fontSize: 20, fontWeight: '900' },
   ambulanceText: { color: '#fff', fontSize: 18, fontWeight: '900' },
   actionSubtext: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '600', marginTop: 2 },
+
+  // Wellness Container Styles
+  wellnessContainer: { paddingHorizontal: 16, marginBottom: 8 },
+  medicineCard: { 
+    backgroundColor: '#fff', 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 18, 
+    borderRadius: 20, 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10
+  },
+  iconCircle: { 
+    backgroundColor: '#e8f5e9', 
+    width: 50, 
+    height: 50, 
+    borderRadius: 25, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginRight: 15 
+  },
+  medicineTextContainer: { flex: 1 },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
+  cardSub: { fontSize: 13, color: '#64748b' },
+  arrow: { fontSize: 20, color: '#cbd5e1', fontWeight: 'bold' },
   
-  listTitle: { fontSize: 16, fontWeight: '700', color: '#64748b', marginBottom: 12, marginLeft: 20 },
-  list: { paddingHorizontal: 16 },
+  listTitle: { fontSize: 16, fontWeight: '700', color: '#64748b', marginTop: 16, marginBottom: 12, marginLeft: 20 },
+  list: { paddingHorizontal: 16, paddingBottom: 20 },
   card: { 
     backgroundColor: '#fff', 
     padding: 20, 
@@ -248,7 +294,7 @@ const styles = StyleSheet.create({
   exp: { fontSize: 13, color: '#94a3b8', marginTop: 6 },
   statusBadge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   statusText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
-  emptyContainer: { marginTop: 100, alignItems: 'center' },
+  emptyContainer: { marginTop: 60, alignItems: 'center' },
   empty: { color: '#94a3b8', fontSize: 16, textAlign: 'center' }
 });
 
