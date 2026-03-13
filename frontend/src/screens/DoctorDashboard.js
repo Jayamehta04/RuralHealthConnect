@@ -7,7 +7,7 @@ import {
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
-const DoctorDashboard = () => {
+const DoctorDashboard = ({ navigation }) => {
   const [appointments, setAppointments] = useState([]);
   const [emergencies, setEmergencies] = useState([]);
   const [ambulances, setAmbulances] = useState([]);
@@ -52,7 +52,7 @@ const DoctorDashboard = () => {
     }
   };
 
-  // --- MAP REDIRECTION LOGIC ---
+  // --- MAP REDIRECTION 
   const openInMaps = (lat, lng) => {
     const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
     const latLng = `${lat},${lng}`;
@@ -65,7 +65,7 @@ const DoctorDashboard = () => {
     Linking.openURL(url);
   };
 
-  // --- AMBULANCE DISPATCH LOGIC ---
+  // --- AMBULANCE DISPATCH 
   const handleDispatch = async (id) => {
     try {
       await axios.put(`http://192.168.29.214:5000/api/ambulance/${id}`, 
@@ -112,16 +112,22 @@ const DoctorDashboard = () => {
         </View>
       </View>
       <Text style={styles.reasonText}>Reason: {item.reason}</Text>
-      {item.status === 'Pending' ? (
-        <TouchableOpacity style={styles.acceptBtn} onPress={() => openPrescriptionBox(item._id)}>
-          <Text style={styles.btnText}>Accept & Advice</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.noteView}>
-          <Text style={styles.noteLabel}>Your Advice:</Text>
-          <Text style={styles.noteContent}>{item.doctorNotes}</Text>
-        </View>
-      )}
+      
+      <View style={styles.buttonRow}>
+        
+        {item.status === 'Pending' ? (
+          <TouchableOpacity style={styles.acceptBtn} onPress={() => openPrescriptionBox(item._id)}>
+            <Text style={styles.btnText}>Accept & Advice</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.acceptBtn, { backgroundColor: '#34495e' }]} 
+            onPress={() => openPrescriptionBox(item._id)}
+          >
+            <Text style={styles.btnText}>📝 Notes</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 
@@ -256,6 +262,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#3498db' },
   listPadding: { padding: 16 },
   card: { backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 16, elevation: 3 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   emergencyCard: { borderLeftWidth: 6, borderLeftColor: '#e74c3c' },
   ambulanceCard: { borderLeftWidth: 6, borderLeftColor: '#f39c12' },
   emergencyTitle: { color: '#e74c3c', fontWeight: '900', marginBottom: 5, fontSize: 12 },
@@ -263,8 +270,9 @@ const styles = StyleSheet.create({
   patientName: { fontSize: 18, fontWeight: 'bold', color: '#334155' },
   reasonText: { fontSize: 15, color: '#475569', marginTop: 8 },
   timeText: { fontSize: 13, color: '#94a3b8', marginTop: 4 },
+  buttonRow: { flexDirection: 'row', marginTop: 15, gap: 10 },
   mapBtn: { backgroundColor: '#34495e', padding: 12, borderRadius: 10, marginTop: 15, alignItems: 'center' },
-  acceptBtn: { backgroundColor: '#3498db', padding: 12, borderRadius: 10, marginTop: 15, alignItems: 'center' },
+  acceptBtn: { backgroundColor: '#3498db', padding: 12, borderRadius: 10, flex: 1, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: 'bold' },
   badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   statusText: { fontSize: 12, fontWeight: 'bold' },

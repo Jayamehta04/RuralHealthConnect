@@ -25,6 +25,11 @@ const HomeScreen = ({ navigation }) => {
   }, []);
 
   const fetchDoctors = async () => {
+    if (!token) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
       const response = await axios.get('http://192.168.29.214:5000/api/doctors', {
         headers: { Authorization: `Bearer ${token}` }
@@ -32,6 +37,12 @@ const HomeScreen = ({ navigation }) => {
       setDoctors(response.data);
     } catch (error) {
       console.error("Fetch Error:", error.message);
+      if (error.response && error.response.status === 401) {
+        Alert.alert("Session Expired", "Please log in again.");
+        logout();
+      } else {
+        Alert.alert("Error", "Failed to load doctors. Please try again.");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

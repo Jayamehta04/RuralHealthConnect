@@ -4,18 +4,19 @@ const {
     bookAppointment, 
     getMyAppointments, 
     getDoctorAppointments,
-    updateAppointmentStatus
+    updateAppointmentStatus,
+    cancelAppointment,
+    rescheduleAppointment
 } = require('../controllers/appointmentController');
 const { protect } = require('../middleware/authMiddleware');
 
-// Route for booking
 router.post('/book', protect, bookAppointment);
 
-// Route for Patients to see their own appointments
 router.get('/my-appointments', protect, getMyAppointments);
 
-// Route for Doctors to see their schedule
 router.get('/doctor-appointments', protect, getDoctorAppointments); 
 router.put('/:id', protect, updateAppointmentStatus);
 
+router.put('/cancel/:id', protect, cancelAppointment);
+router.put('/reschedule/:id', protect, rescheduleAppointment);
 module.exports = router;
