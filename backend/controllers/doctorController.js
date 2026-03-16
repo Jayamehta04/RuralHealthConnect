@@ -1,33 +1,78 @@
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
+const Feedback = require('../models/Feedback');
 
 const getDoctors = async (req, res) => {
   try {
-    const { specialization, location, name } = req.query;
+    const { specialization, location, name, minRating, minExperience, maxExperience, disease } = req.query;
 
-    // Fetch registered doctors from User collection
-    let userQuery = { role: 'doctor' };
-    if (specialization) {
-      userQuery.specialization = specialization;
-    }
-    if (name) {
-      userQuery.name = { $regex: name, $options: 'i' };
-    }
-    const registeredDoctors = await User.find(userQuery);
+    // Common function to apply filter conditions
+    const buildQuery = (base = {}) => {
+      const query = { ...base };
+      if (specialization) query.specialization = { $regex: specialization, $options: 'i' };
+      if (location) query.location = { $regex: location, $options: 'i' };
+      if (name) query.name = { $regex: name, $options: 'i' };
+      if (disease) query.diseaseSpecialty = { $in: [new RegExp(disease, 'i')] };
+      if (minRating) query.rating = { ...query.rating, $gte: Number(minRating) };
+      if (minExperience || maxExperience) {
+        query.experience = {};
+        if (minExperience) query.experience.$gte = Number(minExperience);
+        if (maxExperience) query.experience.$lte = Number(maxExperience);
+      }
+      return query;
+    };
 
-    // Fetch seeded doctors from Doctor collection
-    let doctorQuery = {};
-    if (specialization) {
-      doctorQuery.specialization = specialization;
-    }
-    if (location) {
-      doctorQuery.location = { $regex: location, $options: 'i' };
-    }
-    if (name) {
-      doctorQuery.name = { $regex: name, $options: 'i' };
-    }
-    const seededDoctors = await Doctor.find(doctorQuery);
+    const registeredDoctors = await User.aggregate([
+      { $match: buildQuery({ role: 'doctor' }) },
+      {
+        $lookup: {
+          from: 'feedbacks',
+          localField: '_id',
+          foreignField: 'doctor',
+          as: 'feedbacks'
+        }
+      },
+      {
+        $addFields: {
+          totalReviews: { $size: '$feedbacks' },
+          averageRating: {
+            $cond: [
+              { $gt: [{ $size: '$feedbacks' }, 0] },
+              { $avg: '$feedbacks.rating' },
+              0
+            ]
+          }
+        }
+      },
+      { $project: { feedbacks: 0, password: 0, __v: 0 } }
+    ]);
+
+    // Fetch seeded doctors from Doctor collection using same filters
+    const seededDoctors = await Doctor.aggregate([
+      { $match: buildQuery({}) },
+      {
+        $lookup: {
+          from: 'feedbacks',
+          localField: '_id',
+          foreignField: 'doctor',
+          as: 'feedbacks'
+        }
+      },
+      {
+        $addFields: {
+          totalReviews: { $size: '$feedbacks' },
+          averageRating: {
+            $cond: [
+              { $gt: [{ $size: '$feedbacks' }, 0] },
+              { $avg: '$feedbacks.rating' },
+              0
+            ]
+          }
+        }
+      },
+      { $project: { feedbacks: 0, __v: 0 } }
+    ]);
 
     // Function to check if a doctor has an active appointment
     const checkDoctorAvailability = async (doctorId) => {
@@ -35,7 +80,7 @@ const getDoctors = async (req, res) => {
         const now = new Date();
         const acceptedAppointments = await Appointment.find({
           doctor: doctorId,
-          status: 'Accepted'
+          status: 'accepted'
         });
 
         for (const appt of acceptedAppointments) {
@@ -72,7 +117,9 @@ const getDoctors = async (req, res) => {
         isAvailable,
         location: doctor.location || 'Not specified',
         fees: doctor.fees || 0,
-        diseaseSpecialty: doctor.diseaseSpecialty || []
+        diseaseSpecialty: doctor.diseaseSpecialty || [],
+        averageRating: Number((doctor.averageRating || 0).toFixed(1)),
+        totalReviews: doctor.totalReviews || 0
       };
     }));
 
@@ -87,7 +134,9 @@ const getDoctors = async (req, res) => {
         isAvailable,
         location: doctor.location,
         fees: doctor.fees,
-        diseaseSpecialty: doctor.diseaseSpecialty
+        diseaseSpecialty: doctor.diseaseSpecialty,
+        averageRating: Number((doctor.averageRating || 0).toFixed(1)),
+        totalReviews: doctor.totalReviews || 0
       };
     }));
 
@@ -99,4 +148,81 @@ const getDoctors = async (req, res) => {
   }
 };
 
-module.exports = { getDoctors };
+const getConsultedPatients = async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can access this route' });
+    }
+
+    const appointments = await Appointment.find({
+      doctor: req.user.id,
+      status: 'Completed'
+    }).populate('patient', 'name email phoneNumber specialization');
+
+    res.status(200).json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+const getPatientHistory = async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can access this route' });
+    }
+
+    const { patientId } = req.params;
+    const history = await Appointment.find({
+      doctor: req.user.id,
+      patient: patientId
+    }).populate('patient', 'name email').populate('doctor', 'name specialization');
+
+    res.status(200).json(history);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+const updateSchedule = async (req, res) => {
+  try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Only doctors can access this route' });
+    }
+
+    const { workingHours } = req.body;
+    
+    if (!workingHours) {
+        return res.status(400).json({ message: 'workingHours is required' });
+    }
+
+    // Try finding in User collection first (main system)
+    let doctor = await User.findById(req.user.id);
+    
+    // If not found in User (might be seeded), also update there just in case
+    if (!doctor) {
+        doctor = await Doctor.findById(req.user.id);
+    }
+    
+    if (!doctor) {
+        return res.status(404).json({ message: 'Doctor not found' });
+    }
+
+    doctor.workingHours = workingHours;
+    await doctor.save();
+
+    // If they exist in both places (migrated accounts), keep them in sync
+    if (doctor.constructor.modelName === 'User') {
+        const seededDoc = await Doctor.findById(req.user.id);
+        if (seededDoc) {
+            seededDoc.workingHours = workingHours;
+            await seededDoc.save();
+        }
+    }
+
+    res.status(200).json({ message: 'Schedule updated successfully', workingHours: doctor.workingHours });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+module.exports = { getDoctors, getConsultedPatients, getPatientHistory, updateSchedule };

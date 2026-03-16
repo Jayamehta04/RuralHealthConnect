@@ -3,13 +3,14 @@ const Medicine = require('../models/Medicine');
 // Add a new medicine reminder
 exports.addMedicine = async (req, res) => {
   try {
-    const { name, dosage, time, days } = req.body;
+    const { name, dosage, time, days, notificationId } = req.body;
     const newMed = new Medicine({
       patient: req.user.id,
       name,
       dosage,
       time,
-      days
+      days,
+      notificationId
     });
     await newMed.save();
     res.status(201).json(newMed);

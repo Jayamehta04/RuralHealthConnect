@@ -16,7 +16,13 @@ const MyAppointmentsScreen = () => {
 
   useEffect(() => {
     fetchMyAppointments();
-  }, [token]);
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchMyAppointments();
+    });
+
+    return unsubscribe;
+  }, [navigation, token]);
 
   const fetchMyAppointments = async () => {
     if (!token) return;
@@ -98,33 +104,60 @@ const MyAppointmentsScreen = () => {
       {item.reason && <Text style={styles.reason}>" {item.reason} "</Text>}
 
       {/* Note Section */}
-      {item.note ? (
+      {item.doctorNotes ? (
         <View style={styles.noteContainer}>
           <Text style={styles.noteLabel}>DOCTOR'S NOTE:</Text>
-          <Text style={styles.noteText}>{item.note}</Text>
+          <Text style={styles.noteText}>{item.doctorNotes}</Text>
         </View>
       ) : (
         <Text style={styles.noNote}>No notes from doctor yet.</Text>
       )}
 
-      {/* Action buttons */}
-      {item.status !== 'Completed' && item.status !== 'Cancelled' && (
-        <View style={styles.buttonRow}>
-          <Pressable 
-            style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#c0392b' : '#e74c3c' }]} 
-            onPress={() => handleCancel(item._id)}
-          >
-            <Text style={styles.btnText}>Cancel</Text>
-          </Pressable>
-          
-          <Pressable 
-            style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#2980b9' : '#3498db' }]} 
-            onPress={() => handleReschedule(item)}
-          >
-            <Text style={styles.btnText}>Reschedule</Text>
-          </Pressable>
+      {/* Prescription Section */}
+      {item.prescription ? (
+        <View style={[styles.noteContainer, { borderLeftColor: '#16a34a' }]}>
+          <Text style={styles.noteLabel}>PRESCRIPTION:</Text>
+          <Text style={styles.noteText}>{item.prescription}</Text>
         </View>
+      ) : (
+        <Text style={styles.noNote}>No prescription issued yet.</Text>
       )}
+
+      {/* Action buttons */}
+      <View style={styles.buttonRow}>
+        {item.status !== 'completed' && item.status !== 'cancelled' ? (
+          <>
+            <Pressable 
+              style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#c0392b' : '#e74c3c' }]} 
+              onPress={() => handleCancel(item._id)}
+            >
+              <Text style={styles.btnText}>Cancel</Text>
+            </Pressable>
+            
+            <Pressable 
+              style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#2980b9' : '#3498db' }]} 
+              onPress={() => handleReschedule(item)}
+            >
+              <Text style={styles.btnText}>Reschedule</Text>
+            </Pressable>
+          </>
+        ) : item.status === 'completed' && !item.hasFeedback ? (
+          <Pressable 
+            style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#9b59b6' : '#8e44ad' }]} 
+            onPress={() => navigation.navigate('RateDoctor', {
+              appointmentId: item._id,
+              doctorId: item.doctor?._id,
+              doctorName: item.doctor?.name
+            })}
+          >
+            <Text style={styles.btnText}>Rate Doctor</Text>
+          </Pressable>
+        ) : (
+          <View style={[styles.actionBtn, { backgroundColor: '#16a34a' }]}>
+            <Text style={styles.btnText}>{item.status === 'completed' ? 'Rated' : 'Closed'}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 

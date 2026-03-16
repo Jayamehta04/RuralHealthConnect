@@ -9,20 +9,40 @@ import {
   StatusBar,
   Alert
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
 const HomeScreen = ({ navigation }) => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const isFocused = useIsFocused();
   
-  const { token, logout, user } = useContext(AuthContext);
+  const { token, logout, user, unreadCount, setUnreadCount } = useContext(AuthContext);
 
   useEffect(() => {
     fetchDoctors();
   }, []);
+
+  useEffect(() => {
+    if (isFocused) fetchNotificationCount();
+  }, [isFocused]);
+
+  const fetchNotificationCount = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get('http://192.168.29.214:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const unread = res.data.filter((n) => !n.isRead).length;
+      setUnreadCount(unread);    
+    } catch (err) {
+      console.error('Notification count fetch:', err);
+    }
+  };
 
   const fetchDoctors = async () => {
     if (!token) {
@@ -117,36 +137,8 @@ const HomeScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      
-      {/* HEADER SECTION */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeText}>Hello, {user?.name || 'User'}</Text>
-          <Text style={styles.title}>RuralHealth Dashboard</Text>
-          <TouchableOpacity 
-            style={styles.bookingLink}
-            onPress={() => navigation.navigate('MyAppointments')}
-          >
-            <Text style={styles.subLink}>View My Bookings →</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
+  const renderDashboardContent = () => (
+    <>
       {/* EMERGENCY ACTION BUTTONS */}
       <View style={styles.actionContainer}>
         <TouchableOpacity style={styles.sosButton} onPress={handleSOS}>
@@ -180,9 +172,54 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.arrow}>→</Text>
         </TouchableOpacity>
 
+        {/* Medical Records Card */}
+        <TouchableOpacity 
+          style={[styles.wellnessCard, { marginTop: 10 }]} 
+          onPress={() => navigation.navigate('MedicalRecords')}
+        >
+          <View style={[styles.iconCircle, { backgroundColor: '#f0f9ff' }]}>
+            <Text style={{fontSize: 22}}>📁</Text>
+          </View>
+          <View style={styles.wellnessTextContainer}>
+            <Text style={styles.cardTitle}>Medical Records</Text>
+            <Text style={styles.cardSub}>View your patient history</Text>
+          </View>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+
+        {/* Prescription History Card */}
+        <TouchableOpacity 
+          style={[styles.wellnessCard, { marginTop: 10 }]} 
+          onPress={() => navigation.navigate('PrescriptionHistory')}
+        >
+          <View style={[styles.iconCircle, { backgroundColor: '#f0f7ff' }]}>
+            <Text style={{fontSize: 22}}>🧾</Text>
+          </View>
+          <View style={styles.wellnessTextContainer}>
+            <Text style={styles.cardTitle}>Prescriptions</Text>
+            <Text style={styles.cardSub}>View all issued medicines</Text>
+          </View>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+
+        {/* Chat with doctor */}
+        <TouchableOpacity 
+          style={[styles.wellnessCard, { marginTop: 10 }]} 
+          onPress={() => navigation.navigate('ChatList')}
+        >
+          <View style={[styles.iconCircle, { backgroundColor: '#e0f2fe' }]}>
+            <Text style={{fontSize: 22}}>💬</Text>
+          </View>
+          <View style={styles.wellnessTextContainer}>
+            <Text style={styles.cardTitle}>Messages</Text>
+            <Text style={styles.cardSub}>Chat with doctor</Text>
+          </View>
+          <Text style={styles.arrow}>→</Text>
+        </TouchableOpacity>
+
         {/* Medicine Store Card */}
         <TouchableOpacity 
-          style={[styles.wellnessCard, { marginTop: 12 }]} 
+          style={[styles.wellnessCard, { marginTop: 10 }]} 
           onPress={() => navigation.navigate('Pharmacy')}
         >
           <View style={[styles.iconCircle, { backgroundColor: '#e1f5fe' }]}>
@@ -196,6 +233,61 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
       
+      <Text style={styles.listTitle}>Available Doctors</Text>
+    </>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3498db" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      {/* HEADER SECTION */}
+      <View style={styles.header}>
+        <View style={styles.headerTitleArea}>
+          <Text style={styles.welcomeText}>Hello, {user?.name || 'User'}</Text>
+          <Text style={styles.title} numberOfLines={1}>RuralHealth</Text>
+          <TouchableOpacity 
+            style={styles.bookingLink}
+            onPress={() => navigation.navigate('MyAppointments')}
+          >
+            <Text style={styles.subLink}>View My Bookings →</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.headerRightIcons}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={styles.headerIconBtn}
+          >
+            <Ionicons name="person-circle-outline" size={32} color="#8b5cf6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Notifications')}
+            style={styles.headerIconBtn}
+          >
+            <View>
+              <Ionicons name="notifications-outline" size={26} color="#3b82f6" />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount}</Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={logout}>
+            <Ionicons name="log-out-outline" size={30} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <FlatList
         data={doctors}
         keyExtractor={(item) => item._id}
@@ -203,7 +295,7 @@ const HomeScreen = ({ navigation }) => {
         contentContainerStyle={styles.list}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        ListHeaderComponent={<Text style={styles.listTitle}>Available Doctors</Text>}
+        ListHeaderComponent={renderDashboardContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.empty}>No doctors available in your area yet.</Text>
@@ -220,27 +312,44 @@ const styles = StyleSheet.create({
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    paddingBottom: 20,
+    alignItems: 'center',
+    paddingHorizontal: 16, 
+    paddingBottom: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    paddingTop: 60 
+    paddingTop: 55 
   },
-  welcomeText: { fontSize: 14, color: '#64748b', fontWeight: '500', marginBottom: 4 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1e293b' },
-  bookingLink: { marginTop: 8 },
-  subLink: { color: '#3498db', fontSize: 14, fontWeight: '700' },
-  logoutBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+  headerTitleArea: { flex: 1, paddingRight: 10 },
+  headerRightIcons: { flexDirection: 'row', alignItems: 'center' },
+  welcomeText: { fontSize: 13, color: '#64748b', fontWeight: '500', marginBottom: 2 },
+  title: { fontSize: 22, fontWeight: 'bold', color: '#1e293b' },
+  bookingLink: { marginTop: 4 },
+  subLink: { color: '#3498db', fontSize: 13, fontWeight: '700' },
+  headerIconBtn: {
+    padding: 6,
+    marginLeft: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badge: {
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: -4,
+    right: -4,
     borderWidth: 1,
-    borderColor: '#fee2e2',
-    backgroundColor: '#fef2f2',
-    alignSelf: 'flex-start'
+    borderColor: '#fff',
   },
-  logoutText: { color: '#ef4444', fontWeight: 'bold', fontSize: 13 },
+  badgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 10,
+  },
   
   actionContainer: {
     flexDirection: 'row',
@@ -251,76 +360,77 @@ const styles = StyleSheet.create({
   sosButton: {
     backgroundColor: '#e74c3c',
     flex: 0.32,
-    paddingVertical: 20,
-    borderRadius: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
   },
   ambulanceButton: {
     backgroundColor: '#f39c12',
     flex: 0.64,
-    paddingVertical: 20,
-    borderRadius: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
   },
-  sosText: { color: '#fff', fontSize: 20, fontWeight: '900' },
-  ambulanceText: { color: '#fff', fontSize: 18, fontWeight: '900' },
-  actionSubtext: { color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: '600', marginTop: 2 },
+  sosText: { color: '#fff', fontSize: 18, fontWeight: '900' },
+  ambulanceText: { color: '#fff', fontSize: 16, fontWeight: '900' },
+  actionSubtext: { color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600', marginTop: 2 },
 
   // Wellness Container Styles
-  wellnessContainer: { paddingHorizontal: 16, marginBottom: 8, marginTop: 4 },
+  wellnessContainer: { paddingHorizontal: 16, marginBottom: 4, marginTop: 4 },
   wellnessCard: { 
     backgroundColor: '#fff', 
     flexDirection: 'row', 
     alignItems: 'center', 
-    padding: 16, 
-    borderRadius: 20, 
-    elevation: 3,
+    padding: 14, 
+    borderRadius: 16, 
+    elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowRadius: 10
+    shadowRadius: 6
   },
   iconCircle: { 
-    width: 46, 
-    height: 46, 
-    borderRadius: 23, 
+    width: 42, 
+    height: 42, 
+    borderRadius: 21, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    marginRight: 15 
+    marginRight: 14 
   },
   wellnessTextContainer: { flex: 1 },
-  cardTitle: { fontSize: 17, fontWeight: 'bold', color: '#1e293b' },
-  cardSub: { fontSize: 12, color: '#64748b' },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1e293b' },
+  cardSub: { fontSize: 12, color: '#64748b', marginTop: 2 },
   arrow: { fontSize: 18, color: '#cbd5e1', fontWeight: 'bold' },
   
-  listTitle: { fontSize: 16, fontWeight: '700', color: '#64748b', marginTop: 16, marginBottom: 12, marginLeft: 20 },
-  list: { paddingHorizontal: 16, paddingBottom: 20 },
+  listTitle: { fontSize: 16, fontWeight: '700', color: '#64748b', marginTop: 12, marginBottom: 8, marginLeft: 20 },
+  list: { paddingBottom: 30 },
   card: { 
     backgroundColor: '#fff', 
-    padding: 20, 
-    borderRadius: 16, 
-    marginBottom: 16,
+    padding: 16, 
+    borderRadius: 14, 
+    marginBottom: 12,
+    marginHorizontal: 16,
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center',
     elevation: 2, 
     shadowColor: '#000', 
     shadowOpacity: 0.05, 
-    shadowRadius: 10,
+    shadowRadius: 5,
   },
   cardInfo: { flex: 1 },
-  name: { fontSize: 18, fontWeight: 'bold', color: '#334155' },
-  spec: { fontSize: 15, color: '#3498db', fontWeight: '600', marginTop: 2 },
-  exp: { fontSize: 13, color: '#94a3b8', marginTop: 6 },
+  name: { fontSize: 16, fontWeight: 'bold', color: '#334155' },
+  spec: { fontSize: 14, color: '#3498db', fontWeight: '600', marginTop: 2 },
+  exp: { fontSize: 12, color: '#94a3b8', marginTop: 4 },
   statusBadge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   statusText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
-  emptyContainer: { marginTop: 60, alignItems: 'center' },
-  empty: { color: '#94a3b8', fontSize: 16, textAlign: 'center' }
+  emptyContainer: { marginTop: 40, alignItems: 'center' },
+  empty: { color: '#94a3b8', fontSize: 14, textAlign: 'center' }
 });
 
 export default HomeScreen;

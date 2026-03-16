@@ -6,6 +6,23 @@ import {
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
+import * as Notifications from 'expo-notifications';
+
+const parseTime = (timeStr) => {
+  const match = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
+  if (!match) return null;
+  let hours = parseInt(match[1]);
+  const minutes = parseInt(match[2]);
+  const modifier = match[3].toUpperCase();
+
+  if (hours === 12) {
+    hours = modifier === 'AM' ? 0 : 12;
+  } else if (modifier === 'PM') {
+    hours += 12;
+  }
+  return { hour: hours, minute: minutes };
+};
+
 const AddMedicineScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
@@ -20,13 +37,39 @@ const AddMedicineScreen = ({ navigation }) => {
       return;
     }
 
+    const parsed = parseTime(time);
+    if (!parsed) {
+        Alert.alert("Error", "Invalid time format. Please use format like '08:00 AM'");
+        return;
+    }
+
     setLoading(true);
+    let notificationId = null;
+
     try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      
+      if (status === 'granted') {
+          notificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Time for your Medicine! 💊",
+              body: `It's time to take ${dosage} of ${name}.`,
+              sound: true,
+            },
+            trigger: {
+              type: 'daily',
+              hour: parsed.hour,
+              minute: parsed.minute,
+            },
+          });
+      }
+
       await axios.post('http://192.168.29.214:5000/api/medicines/add', {
         name,
         dosage,
         time,
-        days: ["Everyday"] 
+        days: ["Everyday"],
+        notificationId 
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -34,6 +77,7 @@ const AddMedicineScreen = ({ navigation }) => {
       Alert.alert("Success", "Medicine added to your vault!");
       navigation.goBack(); 
     } catch (error) {
+      console.error(error);
       Alert.alert("Failed", "Could not save medicine.");
     } finally {
       setLoading(false);

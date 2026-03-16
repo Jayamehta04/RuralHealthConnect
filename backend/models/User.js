@@ -13,7 +13,20 @@ const userSchema = mongoose.Schema({
     // Doctor specific fields (optional for patients)
     specialization: { type: String },
     experience: { type: Number },
-    isAvailable: { type: Boolean, default: false }
+    isAvailable: { type: Boolean, default: false },
+    rating: { type: Number, default: 4.5 },
+    location: { type: String },
+    diseaseSpecialty: [String],
+    profilePicture: { type: String },
+    workingHours: {
+        type: Map,
+        of: new mongoose.Schema({
+            start: { type: String, default: '09:00' },
+            end: { type: String, default: '17:00' },
+            isDayOff: { type: Boolean, default: false }
+        }),
+        default: {}
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

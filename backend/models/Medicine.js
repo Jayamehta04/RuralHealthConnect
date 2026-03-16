@@ -7,6 +7,7 @@ const medicineSchema = new mongoose.Schema({
   time: { type: String, required: true },   
   days: [String],                           
   isTaken: { type: Boolean, default: false },
+  notificationId: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

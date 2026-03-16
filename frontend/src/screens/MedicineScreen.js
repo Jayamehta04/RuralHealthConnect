@@ -12,6 +12,8 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { useIsFocused } from '@react-navigation/native'; 
 
+import * as Notifications from 'expo-notifications';
+
 const MedicineScreen = ({ navigation }) => {
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ const MedicineScreen = ({ navigation }) => {
   };
 
   // --- DELETE LOGIC ---
-  const confirmDelete = (id) => {
+  const confirmDelete = (item) => {
     Alert.alert(
       "Remove Medicine",
       "Are you sure you want to delete this reminder permanently?",
@@ -58,7 +60,10 @@ const MedicineScreen = ({ navigation }) => {
           style: "destructive", 
           onPress: async () => {
             try {
-              await axios.delete(`http://192.168.29.214:5000/api/medicines/${id}`, {
+              if (item.notificationId) {
+                 await Notifications.cancelScheduledNotificationAsync(item.notificationId);
+              }
+              await axios.delete(`http://192.168.29.214:5000/api/medicines/${item._id}`, {
                 headers: { Authorization: `Bearer ${token}` }
               });
               fetchMedicines(); // Refresh list after deletion
@@ -75,7 +80,7 @@ const MedicineScreen = ({ navigation }) => {
     <TouchableOpacity 
       style={[styles.card, item.isTaken && styles.cardTaken]} 
       onPress={() => handleToggle(item._id)}
-      onLongPress={() => confirmDelete(item._id)} // Trigger delete on long press
+      onLongPress={() => confirmDelete(item)} // Trigger delete on long press
       delayLongPress={500} // Half a second hold required
     >
       <View style={styles.timeBox}>

@@ -1,4 +1,5 @@
 const Ambulance = require('../models/Ambulance');
+const { sendNotification } = require('./notificationController');
 
 // 1. Function for Patients to request an ambulance
 exports.requestAmbulance = async (req, res) => {
@@ -14,6 +15,19 @@ exports.requestAmbulance = async (req, res) => {
     });
 
     await request.save();
+
+    const doctors = await require('../models/User').find({ role: 'doctor' });
+    await Promise.all(doctors.map((doc) =>
+      sendNotification({
+        user: doc._id,
+        actor: req.user.id,
+        type: 'ambulance_request',
+        title: 'New ambulance request',
+        body: `Patient ${req.user.id} needs ambulance at ${pickupAddress}`,
+        link: '/ambulance'
+      })
+    ));
+
     res.status(201).json({ 
       message: "Ambulance request submitted", 
       request 
@@ -48,6 +62,17 @@ exports.updateAmbulanceStatus = async (req, res) => {
       { status },
       { new: true }
     );
+
+    if (updatedRequest) {
+      await sendNotification({
+        user: updatedRequest.patient,
+        actor: req.user.id,
+        type: 'ambulance_update',
+        title: 'Ambulance status updated',
+        body: `Your ambulance request status is now ${status}`,
+        link: '/ambulance'
+      });
+    }
 
     res.status(200).json({ message: "Status updated", updatedRequest });
   } catch (error) {

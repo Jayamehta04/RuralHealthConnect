@@ -1,4 +1,6 @@
 const Emergency = require('../models/Emergency');
+const User = require('../models/User');
+const { sendNotification } = require('./notificationController');
 
 // 1. Function to save a new SOS alert
 exports.sendSOS = async (req, res) => {
@@ -12,6 +14,19 @@ exports.sendSOS = async (req, res) => {
     });
 
     await newAlert.save();
+
+    const doctors = await User.find({ role: 'doctor' });
+    await Promise.all(doctors.map((doc) =>
+      sendNotification({
+        user: doc._id,
+        actor: req.user.id,
+        type: 'sos_alert',
+        title: 'New SOS Alert',
+        body: `SOS from patient ID ${req.user.id} at ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+        link: '/emergency'
+      })
+    ));
+
     res.status(201).json({ 
       message: "Emergency alert logged successfully", 
       alert: newAlert 
