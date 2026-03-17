@@ -22,6 +22,7 @@ import ChatConversationScreen from '../screens/ChatConversationScreen';
 import RateDoctorScreen from '../screens/RateDoctorScreen';
 import ScheduleSettingsScreen from '../screens/ScheduleSettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import DoctorReviewsScreen from '../screens/DoctorReviewsScreen';
 
 const Stack = createStackNavigator();
 
@@ -60,6 +61,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: 'Prescription History' }} />
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
             <Stack.Screen name="RateDoctor" component={RateDoctorScreen} options={{ title: 'Rate Doctor' }} />
+            <Stack.Screen name="DoctorReviews" component={DoctorReviewsScreen} options={{ title: 'Doctor Reviews' }} />
           </>
         )
       ) : (

@@ -57,10 +57,24 @@ const DoctorDiscoveryScreen = () => {
         <Text style={styles.name}>Dr. {item.name}</Text>
         <Text style={styles.subText}>{item.specialization} • {item.experience} yrs exp</Text>
         <Text style={styles.subText}>⭐ {item.averageRating ?? 0} ({item.totalReviews ?? 0} reviews)</Text>
+        {item.recentFeedback && item.recentFeedback.length > 0 && (
+            <View style={styles.feedbackContainer}>
+              <Text style={styles.feedbackTitle}>Recent Feedback:</Text>
+              {item.recentFeedback.map((fb, index) => (
+                  <Text key={index} style={styles.feedbackText} numberOfLines={2}>"{fb}"</Text>
+              ))}
+            </View>
+        )}
         <Text style={styles.location}>📍 {item.location}</Text>
         <Text style={styles.fees}>Fees: ₹{item.fees}</Text>
       </View>
       <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.reviewsButton}
+          onPress={() => navigation.navigate('DoctorReviews', { doctorId: item._id, doctorName: item.name })}
+        >
+          <Text style={styles.buttonTextBlue}>View Reviews</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.bookButton}
           onPress={() => navigation.navigate('Booking', { doctorId: item._id, doctorName: item.name })}
@@ -186,13 +200,34 @@ const styles = StyleSheet.create({
     borderLeftColor: '#3498db'
   },
   buttonRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
-  bookButton: { backgroundColor: '#10b981', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8 },
+  reviewsButton: { backgroundColor: '#e0f7fa', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginRight: 8, borderWidth: 1, borderColor: '#00acc1' },
+  bookButton: { backgroundColor: '#10b981', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
   buttonText: { color: '#fff', fontWeight: 'bold' },
+  buttonTextBlue: { color: '#00838f', fontWeight: 'bold' },
   info: { flex: 1 },
   name: { fontSize: 19, fontWeight: 'bold', color: '#2c3e50' },
   subText: { color: '#7f8c8d', marginVertical: 4, fontSize: 14 },
   location: { color: '#3498db', fontSize: 14, fontWeight: '500' },
   fees: { marginTop: 8, fontWeight: 'bold', color: '#27ae60', fontSize: 15 },
+  feedbackContainer: {
+    marginTop: 6,
+    marginBottom: 6,
+    padding: 8,
+    backgroundColor: '#ecf0f1',
+    borderRadius: 8,
+  },
+  feedbackTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#7f8c8d',
+    marginBottom: 2
+  },
+  feedbackText: {
+    fontSize: 13,
+    color: '#34495e',
+    fontStyle: 'italic',
+    marginBottom: 2
+  },
   arrowContainer: { marginLeft: 10 },
   arrow: { fontSize: 20, color: '#bdc3c7', fontWeight: 'bold' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

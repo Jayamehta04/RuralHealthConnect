@@ -28,8 +28,11 @@ const getDoctors = async (req, res) => {
       {
         $lookup: {
           from: 'feedbacks',
-          localField: '_id',
-          foreignField: 'doctor',
+          let: { doctorId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$doctor', '$$doctorId'] } } },
+            { $sort: { createdAt: -1 } }
+          ],
           as: 'feedbacks'
         }
       },
@@ -41,6 +44,24 @@ const getDoctors = async (req, res) => {
               { $gt: [{ $size: '$feedbacks' }, 0] },
               { $avg: '$feedbacks.rating' },
               0
+            ]
+          },
+          recentFeedback: {
+            $slice: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: '$feedbacks',
+                      as: 'fb',
+                      cond: { $and: [{ $ne: ['$$fb.comment', null] }, { $ne: ['$$fb.comment', ''] }] }
+                    }
+                  },
+                  as: 'fb',
+                  in: '$$fb.comment'
+                }
+              },
+              2
             ]
           }
         }
@@ -54,8 +75,11 @@ const getDoctors = async (req, res) => {
       {
         $lookup: {
           from: 'feedbacks',
-          localField: '_id',
-          foreignField: 'doctor',
+          let: { doctorId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$doctor', '$$doctorId'] } } },
+            { $sort: { createdAt: -1 } }
+          ],
           as: 'feedbacks'
         }
       },
@@ -67,6 +91,24 @@ const getDoctors = async (req, res) => {
               { $gt: [{ $size: '$feedbacks' }, 0] },
               { $avg: '$feedbacks.rating' },
               0
+            ]
+          },
+          recentFeedback: {
+            $slice: [
+              {
+                $map: {
+                  input: {
+                    $filter: {
+                      input: '$feedbacks',
+                      as: 'fb',
+                      cond: { $and: [{ $ne: ['$$fb.comment', null] }, { $ne: ['$$fb.comment', ''] }] }
+                    }
+                  },
+                  as: 'fb',
+                  in: '$$fb.comment'
+                }
+              },
+              2
             ]
           }
         }
@@ -119,7 +161,8 @@ const getDoctors = async (req, res) => {
         fees: doctor.fees || 0,
         diseaseSpecialty: doctor.diseaseSpecialty || [],
         averageRating: Number((doctor.averageRating || 0).toFixed(1)),
-        totalReviews: doctor.totalReviews || 0
+        totalReviews: doctor.totalReviews || 0,
+        recentFeedback: doctor.recentFeedback || []
       };
     }));
 
@@ -136,11 +179,13 @@ const getDoctors = async (req, res) => {
         fees: doctor.fees,
         diseaseSpecialty: doctor.diseaseSpecialty,
         averageRating: Number((doctor.averageRating || 0).toFixed(1)),
-        totalReviews: doctor.totalReviews || 0
+        totalReviews: doctor.totalReviews || 0,
+        recentFeedback: doctor.recentFeedback || []
       };
     }));
 
     const allDoctors = [...normalizedRegisteredDoctors, ...normalizedSeededDoctors];
+    allDoctors.sort((a, b) => b.averageRating - a.averageRating);
 
     res.status(200).json(allDoctors);
   } catch (error) {

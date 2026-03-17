@@ -128,11 +128,28 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.spec}>{item.specialization}</Text>
         <Text style={styles.exp}>{item.experience} years experience</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+          <Text style={{ fontSize: 13, color: '#f39c12', fontWeight: 'bold' }}>⭐ {item.averageRating ?? 0}</Text>
+          <Text style={{ fontSize: 12, color: '#94a3b8', marginLeft: 4 }}>({item.totalReviews ?? 0} reviews)</Text>
+        </View>
+        {item.recentFeedback && item.recentFeedback.length > 0 && (
+          <View style={{ marginTop: 6, backgroundColor: '#f8fafc', padding: 6, borderRadius: 6, borderWidth: 1, borderColor: '#f1f5f9' }}>
+            <Text style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic' }} numberOfLines={1}>"{item.recentFeedback[0]}"</Text>
+          </View>
+        )}
       </View>
-      <View style={[styles.statusBadge, { backgroundColor: item.isAvailable ? '#e8f5e9' : '#ffebee' }]}>
-        <Text style={[styles.statusText, { color: item.isAvailable ? '#2e7d32' : '#c62828' }]}>
-          {item.isAvailable ? 'Available' : 'Busy'}
-        </Text>
+      <View style={{ alignItems: 'flex-end', justifyContent: 'space-between', paddingVertical: 2 }}>
+        <View style={[styles.statusBadge, { backgroundColor: item.isAvailable ? '#e8f5e9' : '#ffebee' }]}>
+          <Text style={[styles.statusText, { color: item.isAvailable ? '#2e7d32' : '#c62828' }]}>
+            {item.isAvailable ? 'Available' : 'Busy'}
+          </Text>
+        </View>
+        <TouchableOpacity 
+          style={{ marginTop: 8, paddingVertical: 5, paddingHorizontal: 10, backgroundColor: '#f0f9ff', borderRadius: 6, borderWidth: 1, borderColor: '#bae6fd' }}
+          onPress={() => navigation.navigate('DoctorReviews', { doctorId: item._id, doctorName: item.name })}
+        >
+          <Text style={{ fontSize: 11, color: '#0284c7', fontWeight: 'bold' }}>Reviews</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
