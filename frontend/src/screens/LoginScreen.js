@@ -1,9 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ActivityIndicator } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { BASE_URL } from '../config';
 
 const LoginScreen = ({ navigation }) => { 
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useContext(AuthContext);
@@ -11,12 +14,12 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     // Basic validation
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(t('common.error'), t('auth.errorFillFields'));
       return;
     }
 
     try {
-      const response = await axios.post('http://192.168.29.214:5000/api/auth/login', {
+      const response = await axios.post(`${BASE_URL}/api/auth/login`, {
         email,
         password,
       });
@@ -28,7 +31,7 @@ const LoginScreen = ({ navigation }) => {
     } catch (error) {
       // Improved error logging for debugging
       console.log('Login Error:', error.message);
-      Alert.alert('Error', error.response?.data?.message || 'Cannot connect to server');
+      Alert.alert(t('common.error'), error.response?.data?.message || t('auth.errorConnect'));
     }
   };
 
@@ -38,7 +41,7 @@ const LoginScreen = ({ navigation }) => {
       
       <TextInput 
         style={styles.input} 
-        placeholder="Email" 
+        placeholder={t('auth.email')} 
         value={email} 
         onChangeText={setEmail} 
         autoCapitalize="none"
@@ -47,18 +50,18 @@ const LoginScreen = ({ navigation }) => {
       
       <TextInput 
         style={styles.input} 
-        placeholder="Password" 
+        placeholder={t('auth.password')} 
         value={password} 
         onChangeText={setPassword} 
         secureTextEntry
       />
       
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>{t('auth.login')}</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
   <Text style={{ color: '#3498db', textAlign: 'center', marginTop: 20 }}>
-    Don't have an account? Register here
+    {t('auth.registerPrompt')}
   </Text>
 </TouchableOpacity>
     </View>

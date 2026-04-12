@@ -1,34 +1,22 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const RateDoctorScreen = ({ route, navigation }) => {
   const { appointmentId, doctorId, doctorName } = route.params;
   const { token } = useContext(AuthContext);
 
-  const [rating, setRating] = useState('5');
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!rating) {
-      Alert.alert('Error', 'Please provide rating 1-5');
-      return;
-    }
-
-    const numericRating = Number(rating);
-    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
-      Alert.alert('Error', 'Rating must be between 1 and 5');
-      return;
-    }
-
     setLoading(true);
     try {
-      await axios.post('http://192.168.29.214:5000/api/feedback', {
+      await axios.post(`${BASE_URL}/api/feedback`, {
         appointmentId,
         doctorId,
-        rating: numericRating,
         comment
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -45,14 +33,7 @@ const RateDoctorScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Rate Dr. {doctorName}</Text>
-      <Text style={styles.label}>Rating (1-5)</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={rating}
-        onChangeText={setRating}
-      />
+      <Text style={styles.title}>Review Dr. {doctorName}</Text>
 
       <Text style={styles.label}>Comments</Text>
       <TextInput

@@ -14,7 +14,6 @@ const userSchema = mongoose.Schema({
     specialization: { type: String },
     experience: { type: Number },
     isAvailable: { type: Boolean, default: false },
-    rating: { type: Number, default: 4.5 },
     location: { type: String },
     diseaseSpecialty: [String],
     profilePicture: { type: String },

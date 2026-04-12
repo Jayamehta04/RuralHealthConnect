@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const AmbulanceScreen = ({ navigation }) => {
@@ -26,7 +27,7 @@ const AmbulanceScreen = ({ navigation }) => {
       }
 
       // 2. Send Request
-      await axios.post('http://192.168.29.214:5000/api/ambulance/request', {
+      await axios.post(`${BASE_URL}/api/ambulance/request`, {
         pickupAddress: address,
         contactNumber: phone,
         latitude: locationData?.coords.latitude,

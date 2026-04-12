@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const ChatListScreen = ({ navigation }) => {
@@ -14,7 +15,7 @@ const ChatListScreen = ({ navigation }) => {
 
     try {
       if (user?.role === 'doctor') {
-        const result = await axios.get('http://192.168.29.214:5000/api/appointments/doctor-appointments', {
+        const result = await axios.get(`${BASE_URL}/api/appointments/doctor-appointments`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -29,7 +30,7 @@ const ChatListScreen = ({ navigation }) => {
         unique.push(...map.values());
         setPeers(unique);
       } else {
-        const result = await axios.get('http://192.168.29.214:5000/api/doctors', {
+        const result = await axios.get(`${BASE_URL}/api/doctors`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

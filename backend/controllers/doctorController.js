@@ -14,7 +14,6 @@ const getDoctors = async (req, res) => {
       if (location) query.location = { $regex: location, $options: 'i' };
       if (name) query.name = { $regex: name, $options: 'i' };
       if (disease) query.diseaseSpecialty = { $in: [new RegExp(disease, 'i')] };
-      if (minRating) query.rating = { ...query.rating, $gte: Number(minRating) };
       if (minExperience || maxExperience) {
         query.experience = {};
         if (minExperience) query.experience.$gte = Number(minExperience);
@@ -39,13 +38,6 @@ const getDoctors = async (req, res) => {
       {
         $addFields: {
           totalReviews: { $size: '$feedbacks' },
-          averageRating: {
-            $cond: [
-              { $gt: [{ $size: '$feedbacks' }, 0] },
-              { $avg: '$feedbacks.rating' },
-              0
-            ]
-          },
           recentFeedback: {
             $slice: [
               {
@@ -86,13 +78,6 @@ const getDoctors = async (req, res) => {
       {
         $addFields: {
           totalReviews: { $size: '$feedbacks' },
-          averageRating: {
-            $cond: [
-              { $gt: [{ $size: '$feedbacks' }, 0] },
-              { $avg: '$feedbacks.rating' },
-              0
-            ]
-          },
           recentFeedback: {
             $slice: [
               {
@@ -160,7 +145,6 @@ const getDoctors = async (req, res) => {
         location: doctor.location || 'Not specified',
         fees: doctor.fees || 0,
         diseaseSpecialty: doctor.diseaseSpecialty || [],
-        averageRating: Number((doctor.averageRating || 0).toFixed(1)),
         totalReviews: doctor.totalReviews || 0,
         recentFeedback: doctor.recentFeedback || []
       };
@@ -178,14 +162,12 @@ const getDoctors = async (req, res) => {
         location: doctor.location,
         fees: doctor.fees,
         diseaseSpecialty: doctor.diseaseSpecialty,
-        averageRating: Number((doctor.averageRating || 0).toFixed(1)),
         totalReviews: doctor.totalReviews || 0,
         recentFeedback: doctor.recentFeedback || []
       };
     }));
 
     const allDoctors = [...normalizedRegisteredDoctors, ...normalizedSeededDoctors];
-    allDoctors.sort((a, b) => b.averageRating - a.averageRating);
 
     res.status(200).json(allDoctors);
   } catch (error) {

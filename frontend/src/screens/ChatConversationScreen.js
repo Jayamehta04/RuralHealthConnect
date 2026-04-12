@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const ChatConversationScreen = ({ route }) => {
@@ -15,7 +16,7 @@ const ChatConversationScreen = ({ route }) => {
     if (!token || !peerId) return;
 
     try {
-      const response = await axios.get('http://192.168.29.214:5000/api/chat/conversation', {
+      const response = await axios.get(`${BASE_URL}/api/chat/conversation`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { withUserId: peerId }
       });
@@ -31,7 +32,7 @@ const ChatConversationScreen = ({ route }) => {
     if (!text.trim()) return;
     try {
       const payload = { receiverId: peerId, text: text.trim() };
-      const res = await axios.post('http://192.168.29.214:5000/api/chat/send', payload, {
+      const res = await axios.post(`${BASE_URL}/api/chat/send`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setText('');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const PharmacyScreen = ({ navigation }) => {
@@ -16,7 +17,7 @@ const PharmacyScreen = ({ navigation }) => {
 
   const fetchStore = async () => {
     try {
-      const res = await axios.get('http://192.168.29.214:5000/api/pharmacy/store', {
+      const res = await axios.get(`${BASE_URL}/api/pharmacy/store`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setItems(res.data);
@@ -39,7 +40,7 @@ const PharmacyScreen = ({ navigation }) => {
     const total = cart.reduce((sum, item) => sum + item.price, 0);
 
     try {
-      await axios.post('http://192.168.29.214:5000/api/pharmacy/order', {
+      await axios.post(`${BASE_URL}/api/pharmacy/order`, {
         items: cart.map(i => ({ medicine: i._id, quantity: 1 })),
         totalAmount: total,
         address: address

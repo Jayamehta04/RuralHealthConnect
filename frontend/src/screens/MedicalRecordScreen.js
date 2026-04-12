@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, TextInput, ScrollView, Image } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -23,8 +24,8 @@ const MedicalRecordScreen = ({ route, navigation }) => {
     setLoading(true);
     try {
       const url = user?.role === 'doctor' && patientId
-        ? `http://192.168.29.214:5000/api/medical-records/patient/${patientId}`
-        : 'http://192.168.29.214:5000/api/medical-records/me';
+        ? `${BASE_URL}/api/medical-records/patient/${patientId}`
+        : `${BASE_URL}/api/medical-records/me`;
 
       const res = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -93,7 +94,7 @@ const MedicalRecordScreen = ({ route, navigation }) => {
         bodyData = { patientId, diagnosis, notes, prescription };
       }
 
-      await axios.post('http://192.168.29.214:5000/api/medical-records', bodyData, { headers });
+      await axios.post(`${BASE_URL}/api/medical-records`, bodyData, { headers });
 
       setDiagnosis('');
       setNotes('');
@@ -112,7 +113,7 @@ const MedicalRecordScreen = ({ route, navigation }) => {
   const downloadPrescription = async (recordId) => {
     try {
       setDownloadingId(recordId);
-      const url = `http://192.168.29.214:5000/api/medical-records/${recordId}/pdf`;
+      const url = `${BASE_URL}/api/medical-records/${recordId}/pdf`;
       const fileUri = `${FileSystem.documentDirectory}prescription-${recordId}.pdf`;
 
       // Download the PDF from the backend

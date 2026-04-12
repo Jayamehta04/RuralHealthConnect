@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -44,7 +45,7 @@ const DoctorDashboard = ({ navigation }) => {
   const fetchNotificationCount = async () => {
     if (!token) return;
     try {
-      const res = await axios.get('http://192.168.29.214:5000/api/notifications', {
+      const res = await axios.get(`${BASE_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const unread = res.data.filter((n) => !n.isRead).length;
@@ -60,11 +61,11 @@ const DoctorDashboard = ({ navigation }) => {
     try {
       let url = '';
       if (viewMode === 'appointments') {
-        url = 'http://192.168.29.214:5000/api/appointments/doctor-appointments';
+        url = `${BASE_URL}/api/appointments/doctor-appointments`;
       } else if (viewMode === 'sos') {
-        url = 'http://192.168.29.214:5000/api/emergency/all';
+        url = `${BASE_URL}/api/emergency/all`;
       } else if (viewMode === 'ambulance') {
-        url = 'http://192.168.29.214:5000/api/ambulance/all';
+        url = `${BASE_URL}/api/ambulance/all`;
       }
 
       const res = await axios.get(url, {
@@ -86,7 +87,7 @@ const DoctorDashboard = ({ navigation }) => {
     if (!token || !user?.id) return;
     setFeedbackLoading(true);
     try {
-      const res = await axios.get(`http://192.168.29.214:5000/api/feedback/doctor/${user.id}`, {
+      const res = await axios.get(`${BASE_URL}/api/feedback/doctor/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setFeedbacks(res.data);
@@ -112,7 +113,7 @@ const DoctorDashboard = ({ navigation }) => {
   // --- AMBULANCE DISPATCH 
   const handleDispatch = async (id) => {
     try {
-      await axios.put(`http://192.168.29.214:5000/api/ambulance/${id}`, 
+      await axios.put(`${BASE_URL}/api/ambulance/${id}`, 
         { status: 'Dispatched' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -135,7 +136,7 @@ const DoctorDashboard = ({ navigation }) => {
   const handleStatusChange = async (id, action) => {
     try {
       await axios.put(
-        `http://192.168.29.214:5000/api/appointments/${id}/${action}`,
+        `${BASE_URL}/api/appointments/${id}/${action}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -154,8 +155,8 @@ const DoctorDashboard = ({ navigation }) => {
     }
 
     const endpoint = selectedStatus === 'pending'
-      ? `http://192.168.29.214:5000/api/appointments/${selectedId}/accept`
-      : `http://192.168.29.214:5000/api/appointments/${selectedId}`;
+      ? `${BASE_URL}/api/appointments/${selectedId}/accept`
+      : `${BASE_URL}/api/appointments/${selectedId}`;
 
     const body = selectedStatus === 'pending'
       ? { doctorNotes: doctorNote, prescription }
@@ -319,7 +320,6 @@ const DoctorDashboard = ({ navigation }) => {
             feedbacks.slice(0, 3).map((item) => (
               <View key={item._id} style={styles.feedbackItem}>
                 <Text style={styles.feedbackPatient}>Patient: {item.patient?.name}</Text>
-                <Text style={styles.feedbackRating}>Rating: {item.rating} / 5</Text>
                 {item.comment ? <Text style={styles.feedbackComment}>"{item.comment}"</Text> : null}
               </View>
             ))
@@ -514,7 +514,6 @@ const styles = StyleSheet.create({
   noFeedback: { color: '#94a3b8', fontStyle: 'italic' },
   feedbackItem: { marginBottom: 10, backgroundColor: '#f8fafc', padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#f1f5f9' },
   feedbackPatient: { fontWeight: '700', color: '#334155' },
-  feedbackRating: { color: '#10b981', marginTop: 4, fontWeight: '600' },
   feedbackComment: { color: '#475569', fontSize: 13, marginTop: 6, fontStyle: 'italic' },
 
   listPadding: { paddingBottom: 30 },

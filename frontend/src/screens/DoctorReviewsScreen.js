@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const DoctorReviewsScreen = ({ route }) => {
@@ -12,7 +13,7 @@ const DoctorReviewsScreen = ({ route }) => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await axios.get(`http://192.168.29.214:5000/api/feedback/doctor/${doctorId}`, {
+        const response = await axios.get(`${BASE_URL}/api/feedback/doctor/${doctorId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setReviews(response.data);
@@ -28,7 +29,6 @@ const DoctorReviewsScreen = ({ route }) => {
   const renderReview = ({ item }) => (
     <View style={styles.reviewCard}>
       <Text style={styles.patientName}>{item.patient?.name || 'Anonymous'}</Text>
-      <Text style={styles.rating}>⭐ {item.rating}</Text>
       <Text style={styles.comment}>"{item.comment}"</Text>
       <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString()}</Text>
     </View>
@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   patientName: { fontSize: 16, fontWeight: 'bold', color: '#34495e' },
-  rating: { fontSize: 14, color: '#f39c12', marginVertical: 4 },
   comment: { fontSize: 15, color: '#555', fontStyle: 'italic', marginBottom: 6 },
   date: { fontSize: 12, color: '#95a5a6', textAlign: 'right' },
   empty: { textAlign: 'center', marginTop: 30, color: '#7f8c8d', fontSize: 16 }

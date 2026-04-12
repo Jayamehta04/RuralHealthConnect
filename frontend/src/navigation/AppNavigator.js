@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { AuthContext } from '../context/AuthContext';
 
 // 1. Import your new screen
 import HomeScreen from '../screens/HomeScreen';
 import BookingScreen from '../screens/BookingScreen';
+import DoctorDetailsScreen from '../screens/DoctorDetailsScreen';
 import MyAppointmentsScreen from '../screens/MyAppointmentsScreen';
 import DoctorDashboard from '../screens/DoctorDashboard';
 import LoginScreen from '../screens/LoginScreen';
@@ -28,6 +30,7 @@ const Stack = createStackNavigator();
 
 const AppNavigator = () => {
   const { user, token } = useContext(AuthContext);
+  const { t } = useTranslation();
 
   return (
     <Stack.Navigator>
@@ -35,33 +38,34 @@ const AppNavigator = () => {
        
         user?.role === 'doctor' ? (
           <>
-            <Stack.Screen name="DoctorHome" component={DoctorDashboard} />
-            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My Profile' }} />
-            <Stack.Screen name="ScheduleSettings" component={ScheduleSettingsScreen} options={{ title: 'Schedule Settings' }} />
-            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Messages' }} />
-            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: 'Conversation' }} />
-            <Stack.Screen name="MedicalRecords" component={MedicalRecordScreen} options={{ title: 'Medical Records' }} />
-            <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: 'Prescription History' }} />
-            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
+            <Stack.Screen name="DoctorHome" component={DoctorDashboard} options={{ title: t('navigation.doctorDashboard') }} />
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: t('navigation.profile') }} />
+            <Stack.Screen name="ScheduleSettings" component={ScheduleSettingsScreen} options={{ title: t('navigation.schedule') }} />
+            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: t('navigation.chat') }} />
+            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: t('navigation.chatConversation') }} />
+            <Stack.Screen name="MedicalRecords" component={MedicalRecordScreen} options={{ title: t('navigation.medicalRecords') }} />
+            <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: t('navigation.prescriptions') }} />
+            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: t('navigation.notifications') }} />
           </>
         ) : (
           <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'My Profile' }} />
-            <Stack.Screen name="Booking" component={BookingScreen} />
-            <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
-            <Stack.Screen name="Ambulance" component={AmbulanceScreen} options={{ title: 'Emergency Transport' }} />
-            <Stack.Screen name="MedicineVault" component={MedicineScreen} options={{ title: 'My Medicine Vault' }} />
-            <Stack.Screen name="AddMedicine" component={AddMedicineScreen} options={{ title: 'Add Medicine' }} />
-            <Stack.Screen name="Pharmacy" component={PharmacyScreen} options={{ title: 'Medicine Store' }} />
-            <Stack.Screen name="DoctorDiscovery" component={DoctorDiscoveryScreen} options={{ title: 'Find Doctors' }} />
-            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Messages' }} />
-            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: 'Conversation' }} />
-            <Stack.Screen name="MedicalRecords" component={MedicalRecordScreen} options={{ title: 'Medical Records' }} />
-            <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: 'Prescription History' }} />
-            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
-            <Stack.Screen name="RateDoctor" component={RateDoctorScreen} options={{ title: 'Rate Doctor' }} />
-            <Stack.Screen name="DoctorReviews" component={DoctorReviewsScreen} options={{ title: 'Doctor Reviews' }} />
+            <Stack.Screen name="Home" component={HomeScreen} options={{ title: t('navigation.home') }} />
+            <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: t('navigation.profile') }} />
+            <Stack.Screen name="Booking" component={BookingScreen} options={{ title: t('navigation.booking') }} />
+            <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} options={{ title: t('navigation.appointments') }} />
+            <Stack.Screen name="Ambulance" component={AmbulanceScreen} options={{ title: t('navigation.ambulance') }} />
+            <Stack.Screen name="MedicineVault" component={MedicineScreen} options={{ title: t('navigation.vault') }} />
+            <Stack.Screen name="AddMedicine" component={AddMedicineScreen} options={{ title: t('navigation.addMedicine') }} />
+            <Stack.Screen name="Pharmacy" component={PharmacyScreen} options={{ title: t('navigation.pharmacy') }} />
+            <Stack.Screen name="DoctorDiscovery" component={DoctorDiscoveryScreen} options={{ title: t('navigation.discoverDoctors') }} />
+            <Stack.Screen name="DoctorDetails" component={DoctorDetailsScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: t('navigation.chat') }} />
+            <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: t('navigation.chatConversation') }} />
+            <Stack.Screen name="MedicalRecords" component={MedicalRecordScreen} options={{ title: t('navigation.medicalRecords') }} />
+            <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: t('navigation.prescriptions') }} />
+            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: t('navigation.notifications') }} />
+            <Stack.Screen name="RateDoctor" component={RateDoctorScreen} options={{ title: t('navigation.rateDoctor') }} />
+            <Stack.Screen name="DoctorReviews" component={DoctorReviewsScreen} options={{ title: t('navigation.doctorReviews') }} />
           </>
         )
       ) : (

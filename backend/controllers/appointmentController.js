@@ -1,5 +1,7 @@
 const Appointment = require('../models/Appointment');
+const Medicine = require('../models/Medicine');
 const { sendNotification } = require('./notificationController');
+const { extractMedicinesFromText } = require('../utils/aiHelper');
 
 // Utility to convert HH:MM into minutes
 const convertTimeToMinutes = (timeStr) => {
@@ -56,6 +58,12 @@ exports.bookAppointment = async (req, res) => {
         }
 
         const appointmentDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (appointmentDate < today) {
+            return res.status(400).json({ message: 'Please select a valid future date' });
+        }
 
         const appointment = await Appointment.create({
             patient: req.user.id,
@@ -109,6 +117,13 @@ exports.getDoctorAvailableSlots = async (req, res) => {
 
     // Determine the day of the week for the requested date
     const reqDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (reqDate < today) {
+        return res.status(400).json({ message: 'Please select a valid future date' });
+    }
+
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = dayNames[reqDate.getDay()]; // e.g., 'Monday'
 
@@ -252,6 +267,24 @@ const updateStatus = async (req, res, newStatus, validCurrent = null) => {
     if (req.body.prescription) appointment.prescription = req.body.prescription;
     await appointment.save();
 
+    // Auto-extract medicines to Vault when completed
+    if (newStatus === 'completed' && appointment.prescription) {
+      extractMedicinesFromText(appointment.prescription).then(async (parsedMeds) => {
+        for (const med of parsedMeds) {
+          if (!med.medicine || !med.times || med.times.length === 0) continue;
+          for (const timeStr of med.times) {
+            await Medicine.create({
+              patient: appointment.patient,
+              name: med.medicine,
+              dosage: med.dosage,
+              time: timeStr,
+              days: ["Everyday"]
+            });
+          }
+        }
+      }).catch(err => console.error("Auto vault insertion failed in background:", err.message));
+    }
+
     await sendNotification({
       user: appointment.patient,
       actor: req.user.id,
@@ -335,8 +368,15 @@ exports.completeAppointment = async (req, res) => updateStatus(req, res, 'comple
           return res.status(400).json({ message: 'Cannot reschedule completed or cancelled appointment' });
         }
         
+        const parsedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (parsedDate < today) {
+            return res.status(400).json({ message: 'Please select a valid future date' });
+        }
+
         // Reset status to pending when rescheduled
-        appointment.date = new Date(date);
+        appointment.date = parsedDate;
         appointment.time = time;
         appointment.status = 'pending'; // Reset to pending for doctor approval
         

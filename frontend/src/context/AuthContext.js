@@ -1,6 +1,32 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { io } from 'socket.io-client';
+import { BASE_URL } from '../config';
+
+const saveSecurely = async (key, value) => {
+  if (Platform.OS === 'web') {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  } else {
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+const getSecurely = async (key) => {
+  if (Platform.OS === 'web') {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  } else {
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
+const deleteSecurely = async (key) => {
+  if (Platform.OS === 'web') {
+    try { localStorage.removeItem(key); } catch (e) {}
+  } else {
+    await SecureStore.deleteItemAsync(key);
+  }
+};
 
 export const AuthContext = createContext();
 
@@ -14,8 +40,8 @@ export const AuthProvider = ({ children }) => {
   // Check if a user is already logged in when app starts
   useEffect(() => {
     const loadStoredData = async () => {
-      const storedToken = await SecureStore.getItemAsync('userToken');
-      const storedUser = await SecureStore.getItemAsync('userData');
+      const storedToken = await getSecurely('userToken');
+      const storedUser = await getSecurely('userData');
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
@@ -28,13 +54,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
-    await SecureStore.setItemAsync('userToken', userToken);
-    await SecureStore.setItemAsync('userData', JSON.stringify(userData));
+    await saveSecurely('userToken', userToken);
+    await saveSecurely('userData', JSON.stringify(userData));
   };
 
   useEffect(() => {
     if (token && user) {
-      const socketClient = io('http://192.168.29.214:5000', {
+      const socketClient = io(BASE_URL, {
         transports: ['websocket'],
         auth: { token },
       });
@@ -56,8 +82,8 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     setUser(null);
     setToken(null);
-    await SecureStore.deleteItemAsync('userToken');
-    await SecureStore.deleteItemAsync('userData');
+    await deleteSecurely('userToken');
+    await deleteSecurely('userData');
   };
 
   return (

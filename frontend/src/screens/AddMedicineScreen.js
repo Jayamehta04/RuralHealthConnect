@@ -1,15 +1,14 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, 
   StyleSheet, Alert, ScrollView 
 } from 'react-native';
-import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
-
+import { useTranslation } from 'react-i18next';
 import * as Notifications from 'expo-notifications';
+import { addMedicineLocal } from '../utils/medicineStorage';
 
 const parseTime = (timeStr) => {
-  const match = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
+  const match = timeStr.trim().match(/(\d+):(\d+)\s?(AM|PM)/i);
   if (!match) return null;
   let hours = parseInt(match[1]);
   const minutes = parseInt(match[2]);
@@ -24,61 +23,77 @@ const parseTime = (timeStr) => {
 };
 
 const AddMedicineScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
   const [time, setTime] = useState('');
+  const [duration, setDuration] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { token } = useContext(AuthContext);
 
   const handleAdd = async () => {
-    if (!name || !dosage || !time) {
-      Alert.alert("Error", "Please fill in all fields (e.g., Paracetamol, 1 Tab, 08:00 AM)");
+    if (!name || !dosage || !time || !duration) {
+      Alert.alert(t('common.error'), t('medicine.errorFields'));
       return;
     }
 
-    const parsed = parseTime(time);
-    if (!parsed) {
-        Alert.alert("Error", "Invalid time format. Please use format like '08:00 AM'");
+    const timeList = time.split(',').map(t => parseTime(t)).filter(t => t);
+    if (timeList.length === 0) {
+        Alert.alert(t('common.error'), t('medicine.errorTime'));
+        return;
+    }
+
+    const durDays = parseInt(duration);
+    if (isNaN(durDays) || durDays <= 0) {
+        Alert.alert("Error", "Duration must be a positive number of days.");
         return;
     }
 
     setLoading(true);
-    let notificationId = null;
+    let notificationIds = [];
 
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       
       if (status === 'granted') {
-          notificationId = await Notifications.scheduleNotificationAsync({
-            content: {
-              title: "Time for your Medicine! 💊",
-              body: `It's time to take ${dosage} of ${name}.`,
-              sound: true,
-            },
-            trigger: {
-              type: 'daily',
-              hour: parsed.hour,
-              minute: parsed.minute,
-            },
-          });
+          let currentDate = new Date();
+          
+          for (let day = 0; day < durDays; day++) {
+             for (const t of timeList) {
+               const scheduleDate = new Date(currentDate);
+               scheduleDate.setDate(currentDate.getDate() + day);
+               scheduleDate.setHours(t.hour, t.minute, 0, 0);
+
+               if (scheduleDate > new Date()) {
+                 const nid = await Notifications.scheduleNotificationAsync({
+                   content: {
+                     title: t('medicine.notifTitle'),
+                     body: t('medicine.notifBody', { dosage, name }),
+                     sound: true,
+                   },
+                   trigger: {
+                     type: 'date',
+                     date: scheduleDate,
+                   },
+                 });
+                 notificationIds.push(nid);
+               }
+             }
+          }
       }
 
-      await axios.post('http://192.168.29.214:5000/api/medicines/add', {
+      await addMedicineLocal({
         name,
         dosage,
         time,
-        days: ["Everyday"],
-        notificationId 
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+        duration: `${durDays} days`,
+        notificationIds 
       });
 
-      Alert.alert("Success", "Medicine added to your vault!");
+      Alert.alert(t('common.success'), t('medicine.success'));
       navigation.goBack(); 
     } catch (error) {
       console.error(error);
-      Alert.alert("Failed", "Could not save medicine.");
+      Alert.alert(t('common.error'), t('medicine.fail'));
     } finally {
       setLoading(false);
     }
@@ -86,30 +101,39 @@ const AddMedicineScreen = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>New Medication</Text>
+      <Text style={styles.title}>{t('medicine.newTitle')}</Text>
       
-      <Text style={styles.label}>Medicine Name</Text>
+      <Text style={styles.label}>{t('medicine.name')}</Text>
       <TextInput 
         style={styles.input} 
-        placeholder="e.g. Paracetamol" 
+        placeholder={t('medicine.namePlaceholder')} 
         value={name} 
         onChangeText={setName} 
       />
 
-      <Text style={styles.label}>Dosage</Text>
+      <Text style={styles.label}>{t('medicine.dosage')}</Text>
       <TextInput 
         style={styles.input} 
-        placeholder="e.g. 1 Tablet or 5ml" 
+        placeholder={t('medicine.dosagePlaceholder')} 
         value={dosage} 
         onChangeText={setDosage} 
       />
 
-      <Text style={styles.label}>Reminder Time</Text>
+      <Text style={styles.label}>{t('medicine.timeLabel')}</Text>
       <TextInput 
         style={styles.input} 
-        placeholder="e.g. 08:00 AM" 
+        placeholder={t('medicine.timePlaceholder')} 
         value={time} 
         onChangeText={setTime} 
+      />
+
+      <Text style={styles.label}>{t('medicine.duration')}</Text>
+      <TextInput 
+        style={styles.input} 
+        placeholder={t('medicine.durationPlaceholder')} 
+        keyboardType="numeric"
+        value={duration} 
+        onChangeText={setDuration} 
       />
 
       <TouchableOpacity 
@@ -117,14 +141,14 @@ const AddMedicineScreen = ({ navigation }) => {
         onPress={handleAdd}
         disabled={loading}
       >
-        <Text style={styles.btnText}>{loading ? 'Saving...' : 'Add to Vault'}</Text>
+        <Text style={styles.btnText}>{loading ? t('medicine.saving') : t('medicine.addBtn')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 25, backgroundColor: '#fff', flexGrow: 1 },
+  container: { padding: 25, backgroundColor: '#fff', flexGrow: 1, paddingTop: 60 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#2ecc71', marginBottom: 30 },
   label: { fontSize: 16, fontWeight: '600', color: '#334155', marginBottom: 8 },
   input: { 

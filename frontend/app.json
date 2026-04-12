@@ -9,7 +9,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jayamehta.frontend",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to allow patients and doctors to upload profile pictures or medical documents.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photos to let you share medical records.",
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to show nearby rural health centers and clinics.",
+        "NSLocationAlwaysUsageDescription": "This app uses your location to show nearby rural health centers and clinics.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSSpeechRecognitionUsageDescription": "This app uses Speech Recognition to allow you to add medicines using voice.",
+        "NSMicrophoneUsageDescription": "This app uses your microphone to transcribe your voice for adding medicines."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +30,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.jayamehta.frontend"
+      "package": "com.jayamehta.frontend",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "output": "static",
@@ -41,11 +56,37 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share medical records.",
+          "cameraPermission": "The app uses the camera to allow you to upload profile pictures or medical documents."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow RuralHealthConnect to use your location to find nearby health centers."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#ffffff"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "680d4768-5204-47d6-b55c-26f43e76641e"
+      }
     }
   }
 }

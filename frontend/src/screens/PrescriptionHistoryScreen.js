@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const PrescriptionHistoryScreen = () => {
@@ -11,7 +12,7 @@ const PrescriptionHistoryScreen = () => {
   const fetchPrescriptions = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://192.168.29.214:5000/api/appointments/my-prescriptions', {
+      const res = await axios.get(`${BASE_URL}/api/appointments/my-prescriptions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPrescriptions(res.data);

@@ -4,6 +4,7 @@ import {
   Switch, Alert, ActivityIndicator, StatusBar 
 } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { Picker } from '@react-native-picker/picker';
 
@@ -43,7 +44,7 @@ const ScheduleSettingsScreen = ({ navigation }) => {
   const fetchCurrentSchedule = async () => {
     try {
       
-      const res = await axios.get('http://192.168.29.214:5000/api/doctors', {
+      const res = await axios.get(`${BASE_URL}/api/doctors`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const me = res.data.find(d => d._id === user.id);
@@ -65,7 +66,7 @@ const ScheduleSettingsScreen = ({ navigation }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await axios.put('http://192.168.29.214:5000/api/doctors/schedule', 
+      await axios.put(`${BASE_URL}/api/doctors/schedule`, 
         { workingHours: schedule },
         { headers: { Authorization: `Bearer ${token}` } }
       );

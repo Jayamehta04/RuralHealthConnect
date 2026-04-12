@@ -2,33 +2,11 @@ const Feedback = require('../models/Feedback');
 const User = require('../models/User');
 const Appointment = require('../models/Appointment');
 
-const updateDoctorRating = async (doctorId) => {
-  const result = await Feedback.aggregate([
-    { $match: { doctor: doctorId } },
-    {
-      $group: {
-        _id: '$doctor',
-        avgRating: { $avg: '$rating' },
-        count: { $sum: 1 }
-      }
-    }
-  ]);
-
-  if (result.length > 0) {
-    const { avgRating } = result[0];
-    await User.findByIdAndUpdate(doctorId, { rating: avgRating.toFixed(1) }, { new: true });
-  }
-};
-
 exports.submitFeedback = async (req, res) => {
   try {
-    const { appointmentId, doctorId, rating, comment } = req.body;
-    if (!doctorId || rating == null || !appointmentId) {
-      return res.status(400).json({ message: 'doctorId, appointmentId and rating are required' });
-    }
-
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    const { appointmentId, doctorId, comment } = req.body;
+    if (!doctorId || !appointmentId) {
+      return res.status(400).json({ message: 'doctorId and appointmentId are required' });
     }
 
     const appointment = await Appointment.findById(appointmentId);
@@ -49,11 +27,9 @@ exports.submitFeedback = async (req, res) => {
       patient: req.user.id,
       doctor: doctorId,
       appointment: appointmentId,
-      rating,
       comment
     });
 
-    await updateDoctorRating(doctorId);
     res.status(201).json(feedback);
   } catch (err) {
     res.status(500).json({ message: err.message });

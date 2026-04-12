@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 
 const NotificationScreen = () => {
@@ -11,7 +12,7 @@ const NotificationScreen = () => {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://192.168.29.214:5000/api/notifications', {
+      const res = await axios.get(`${BASE_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data);
@@ -27,7 +28,7 @@ const NotificationScreen = () => {
 
   const markAsRead = async (id) => {
     try {
-      await axios.put(`http://192.168.29.214:5000/api/notifications/read/${id}`, {}, {
+      await axios.put(`${BASE_URL}/api/notifications/read/${id}`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchNotifications();
@@ -39,7 +40,7 @@ const NotificationScreen = () => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put('http://192.168.29.214:5000/api/notifications/read-all', {}, {
+      await axios.put(`${BASE_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchNotifications();

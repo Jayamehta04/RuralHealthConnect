@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 
 const RegisterScreen = ({ navigation }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,37 +18,37 @@ const RegisterScreen = ({ navigation }) => {
   const handleRegister = async () => {
     // 1. Validation check
     if (!formData.name || !formData.email || !formData.password) {
-      Alert.alert("Error", "Please fill in all required fields");
+      Alert.alert(t('common.error'), t('auth.errorFillFields'));
       return;
     }
 
     try {
       // 2. Ensure your IP matches your backend server
-      const response = await axios.post('http://192.168.29.214:5000/api/auth/register', formData);
+      const response = await axios.post(`${BASE_URL}/api/auth/register`, formData);
       
       if (response.data) {
-        Alert.alert("Success", "Account created! Please login.");
+        Alert.alert(t('common.success'), t('auth.registerSuccess'));
         navigation.navigate('Login'); // This requires the navigation prop to be passed correctly
       }
     } catch (error) {
       console.log("Registration Error:", error.response?.data);
-      Alert.alert("Registration Failed", error.response?.data?.message || "Something went wrong");
+      Alert.alert(t('common.error'), error.response?.data?.message || t('auth.registerFail'));
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Create Account</Text>
+      <Text style={styles.header}>{t('auth.register')}</Text>
       
       <TextInput 
         style={styles.input} 
-        placeholder="Full Name" 
+        placeholder={t('auth.fullName')} 
         onChangeText={(val) => setFormData({...formData, name: val})} 
       />
       
       <TextInput 
         style={styles.input} 
-        placeholder="Email" 
+        placeholder={t('auth.email')} 
         autoCapitalize="none" 
         keyboardType="email-address"
         onChangeText={(val) => setFormData({...formData, email: val})} 
@@ -53,12 +56,12 @@ const RegisterScreen = ({ navigation }) => {
       
       <TextInput 
         style={styles.input} 
-        placeholder="Password" 
+        placeholder={t('auth.password')} 
         secureTextEntry 
         onChangeText={(val) => setFormData({...formData, password: val})} 
       />
 
-      <Text style={styles.label}>Register as:</Text>
+      <Text style={styles.label}>{t('auth.registerAs')}</Text>
       <View style={styles.roleGroup}>
         <TouchableOpacity 
           style={[styles.roleBtn, formData.role === 'patient' && styles.activeRole]} 
@@ -80,12 +83,12 @@ const RegisterScreen = ({ navigation }) => {
         <>
           <TextInput 
             style={styles.input} 
-            placeholder="Specialization (e.g. Cardiology)" 
+            placeholder={t('auth.specializationPlaceholder')} 
             onChangeText={(val) => setFormData({...formData, specialization: val})} 
           />
           <TextInput 
             style={styles.input} 
-            placeholder="Years of Experience" 
+            placeholder={t('auth.experiencePlaceholder')} 
             keyboardType="numeric" 
             onChangeText={(val) => setFormData({...formData, experience: val})} 
           />
@@ -93,11 +96,11 @@ const RegisterScreen = ({ navigation }) => {
       )}
 
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+        <Text style={styles.buttonText}>{t('auth.register')}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.footerText}>Already have an account? Login</Text>
+        <Text style={styles.footerText}>{t('auth.loginPrompt')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

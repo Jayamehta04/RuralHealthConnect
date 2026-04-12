@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, Modal, Alert, TextInput } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, Modal, Alert, TextInput, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 const MyAppointmentsScreen = () => {
+  const { t } = useTranslation();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleModal, setRescheduleModal] = useState(false);
@@ -27,7 +31,7 @@ const MyAppointmentsScreen = () => {
   const fetchMyAppointments = async () => {
     if (!token) return;
     try {
-      const response = await axios.get('http://192.168.29.214:5000/api/appointments/my-appointments', {
+      const response = await axios.get(`${BASE_URL}/api/appointments/my-appointments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
@@ -40,22 +44,22 @@ const MyAppointmentsScreen = () => {
 
   const handleCancel = async (appointmentId) => {
     Alert.alert(
-      "Cancel Appointment",
-      "Are you sure you want to cancel this appointment?",
+      t('appointments.cancelAppointment'),
+      t('appointments.cancelConfirm'),
       [
-        { text: "No", style: "cancel" },
+        { text: t('common.no'), style: 'cancel' },
         {
-          text: "Yes, Cancel",
-          style: "destructive",
+          text: t('appointments.yesCancel'),
+          style: 'destructive',
           onPress: async () => {
             try {
-              await axios.put(`http://192.168.29.214:5000/api/appointments/cancel/${appointmentId}`, {}, {
+              await axios.put(`${BASE_URL}/api/appointments/cancel/${appointmentId}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
               });
-              Alert.alert("Success", "Appointment cancelled");
+              Alert.alert(t('common.success'), t('appointments.cancelled'));
               fetchMyAppointments(); // Refresh list
             } catch (error) {
-              Alert.alert("Error", "Failed to cancel appointment");
+              Alert.alert(t('common.error'), t('appointments.cancelFail'));
             }
           }
         }
@@ -72,99 +76,117 @@ const MyAppointmentsScreen = () => {
 
   const confirmReschedule = async () => {
     if (!selectedDate || !selectedTime) {
-      Alert.alert("Error", "Please enter both date and time");
+      Alert.alert(t('common.error'), t('appointments.errorFillFields'));
       return;
     }
 
     try {
       await axios.put(
-        `http://192.168.29.214:5000/api/appointments/reschedule/${selectedAppointment._id}`,
+        `${BASE_URL}/api/appointments/reschedule/${selectedAppointment._id}`,
         { date: selectedDate, time: selectedTime },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      Alert.alert("Success", "Appointment rescheduled");
+      Alert.alert(t('common.success'), t('appointments.rescheduleSuccess'));
       setRescheduleModal(false);
       fetchMyAppointments(); // Refresh list
     } catch (error) {
-      Alert.alert("Error", "Failed to reschedule appointment");
+      Alert.alert(t('common.error'), t('appointments.rescheduleFail'));
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.doctorName}>Dr. {item.doctor?.name || 'Unknown Doctor'}</Text>
-        <Text style={[styles.status, { color: item.status === 'Accepted' ? '#2ecc71' : '#e67e22' }]}>
-          {item.status}
-        </Text>
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Accepted': return { bg: '#dcfce7', text: '#166534' };
+      case 'completed': return { bg: '#e0f2fe', text: '#075985' };
+      case 'cancelled': return { bg: '#fee2e2', text: '#991b1b' };
+      default: return { bg: '#fef3c7', text: '#92400e' };
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    const statusStyle = getStatusColor(item.status);
+    
+    return (
+    <View style={styles.ticketCard}>
+      <View style={styles.ticketHeader}>
+        <View style={styles.docInfo}>
+           <View style={styles.avatarMini}>
+              <Ionicons name="person" size={16} color="#14b8a6" />
+           </View>
+           <Text style={styles.doctorName}>Dr. {item.doctor?.name || 'Unknown Doctor'}</Text>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+          <Text style={[styles.statusText, { color: statusStyle.text }]}>{item.status}</Text>
+        </View>
       </View>
 
-      <Text style={styles.dateTime}>📅 {new Date(item.date).toLocaleDateString()} at {item.time}</Text>
-      {item.reason && <Text style={styles.reason}>" {item.reason} "</Text>}
+      <View style={styles.ticketBody}>
+        <View style={styles.dateTimeRow}>
+           <Ionicons name="calendar-outline" size={16} color="#64748b" />
+           <Text style={styles.dateTimeText}>{new Date(item.date).toLocaleDateString()}</Text>
+           <Ionicons name="time-outline" size={16} color="#64748b" style={{marginLeft: 16}} />
+           <Text style={styles.dateTimeText}>{item.time}</Text>
+        </View>
+        {item.reason && <Text style={styles.reasonText}>For: {item.reason}</Text>}
+      </View>
 
-      {/* Note Section */}
       {item.doctorNotes ? (
         <View style={styles.noteContainer}>
-          <Text style={styles.noteLabel}>DOCTOR'S NOTE:</Text>
+          <Text style={styles.noteLabel}>{t('appointments.doctorNote')}</Text>
           <Text style={styles.noteText}>{item.doctorNotes}</Text>
         </View>
-      ) : (
-        <Text style={styles.noNote}>No notes from doctor yet.</Text>
-      )}
+      ) : null}
 
-      {/* Prescription Section */}
       {item.prescription ? (
-        <View style={[styles.noteContainer, { borderLeftColor: '#16a34a' }]}>
-          <Text style={styles.noteLabel}>PRESCRIPTION:</Text>
+        <View style={[styles.noteContainer, { backgroundColor: '#f0fdfa' }]}>
+          <Text style={[styles.noteLabel, { color: '#0f766e' }]}>{t('appointments.prescription')}</Text>
           <Text style={styles.noteText}>{item.prescription}</Text>
         </View>
-      ) : (
-        <Text style={styles.noNote}>No prescription issued yet.</Text>
-      )}
+      ) : null}
 
-      {/* Action buttons */}
       <View style={styles.buttonRow}>
         {item.status !== 'completed' && item.status !== 'cancelled' ? (
           <>
-            <Pressable 
-              style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#c0392b' : '#e74c3c' }]} 
+            <TouchableOpacity 
+              style={[styles.actionBtn, { backgroundColor: '#fef2f2' }]} 
               onPress={() => handleCancel(item._id)}
             >
-              <Text style={styles.btnText}>Cancel</Text>
-            </Pressable>
+              <Text style={[styles.btnText, { color: '#dc2626' }]}>{t('appointments.cancel')}</Text>
+            </TouchableOpacity>
             
-            <Pressable 
-              style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#2980b9' : '#3498db' }]} 
+            <TouchableOpacity 
+              style={[styles.actionBtn, { backgroundColor: '#f0f9ff' }]} 
               onPress={() => handleReschedule(item)}
             >
-              <Text style={styles.btnText}>Reschedule</Text>
-            </Pressable>
+              <Text style={[styles.btnText, { color: '#0284c7' }]}>{t('appointments.reschedule')}</Text>
+            </TouchableOpacity>
           </>
         ) : item.status === 'completed' && !item.hasFeedback ? (
-          <Pressable 
-            style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? '#9b59b6' : '#8e44ad' }]} 
+          <TouchableOpacity 
+            style={[styles.actionBtn, { backgroundColor: '#fdf4ff' }]} 
             onPress={() => navigation.navigate('RateDoctor', {
               appointmentId: item._id,
               doctorId: item.doctor?._id,
               doctorName: item.doctor?.name
             })}
           >
-            <Text style={styles.btnText}>Rate Doctor</Text>
-          </Pressable>
+            <Text style={[styles.btnText, { color: '#a21caf' }]}>{t('appointments.writeReview')}</Text>
+          </TouchableOpacity>
         ) : (
-          <View style={[styles.actionBtn, { backgroundColor: '#16a34a' }]}>
-            <Text style={styles.btnText}>{item.status === 'completed' ? 'Rated' : 'Closed'}</Text>
+          <View style={[styles.actionBtn, { backgroundColor: '#f1f5f9' }]}>
+            <Text style={[styles.btnText, { color: '#64748b' }]}>{item.status === 'completed' ? t('appointments.reviewed') : t('appointments.closed')}</Text>
           </View>
         )}
       </View>
     </View>
-  );
+    );
+  };
 
   if (loading) return (
     <View style={styles.loaderContainer}>
       <ActivityIndicator size="large" color="#3498db" />
-      <Text style={{marginTop: 10}}>Loading appointments...</Text>
+      <Text style={{marginTop: 10}}>{t('appointments.loading')}</Text>
     </View>
   );
 
@@ -176,7 +198,7 @@ const MyAppointmentsScreen = () => {
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No appointments found.</Text>
+          <Text style={styles.emptyText}>{t('appointments.empty')}</Text>
         }
       />
 
@@ -190,9 +212,9 @@ const MyAppointmentsScreen = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Reschedule Appointment</Text>
+              <Text style={styles.modalTitle}>{t('appointments.rescheduleTitle')}</Text>
 
-              <Text style={styles.label}>Date (YYYY-MM-DD):</Text>
+              <Text style={styles.label}>{t('appointments.dateLabel')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="2026-03-15"
@@ -200,7 +222,7 @@ const MyAppointmentsScreen = () => {
                 onChangeText={setSelectedDate}
               />
 
-              <Text style={styles.label}>Time (HH:MM):</Text>
+              <Text style={styles.label}>{t('appointments.timeLabel')}</Text>
               <TextInput
                 style={styles.input}
                 placeholder="10:00"
@@ -213,14 +235,14 @@ const MyAppointmentsScreen = () => {
                   style={({ pressed }) => [styles.modalBtn, { backgroundColor: pressed ? '#7f8c8d' : '#95a5a6' }]} 
                   onPress={() => setRescheduleModal(false)}
                 >
-                  <Text style={styles.modalBtnText}>Cancel</Text>
+                  <Text style={styles.modalBtnText}>{t('common.cancel')}</Text>
                 </Pressable>
 
                 <Pressable 
                   style={({ pressed }) => [styles.modalBtn, { backgroundColor: pressed ? '#1e8449' : '#27ae60' }]} 
                   onPress={confirmReschedule}
                 >
-                  <Text style={styles.modalBtnText}>Confirm</Text>
+                  <Text style={styles.modalBtnText}>{t('common.confirm')}</Text>
                 </Pressable>
               </View>
             </View>
@@ -232,47 +254,41 @@ const MyAppointmentsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: '#f4f7f6' },
+  container: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  card: { 
-    backgroundColor: '#fff', 
-    padding: 15, 
-    borderRadius: 12, 
-    marginBottom: 15, 
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  doctorName: { fontSize: 18, fontWeight: 'bold', color: '#2c3e50' },
-  status: { fontWeight: 'bold', fontSize: 14, textTransform: 'uppercase' },
-  dateTime: { color: '#7f8c8d', fontSize: 14, marginBottom: 8 },
-  reason: { color: '#34495e', fontStyle: 'italic', marginBottom: 10, fontSize: 13 },
-  noteContainer: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: '#ebf5fb',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3498db',
-  },
-  noteLabel: { fontWeight: 'bold', color: '#2980b9', fontSize: 11, marginBottom: 2 },
-  noteText: { color: '#2c3e50', fontSize: 13 },
-  noNote: { fontSize: 12, color: '#bdc3c7', marginTop: 10, fontStyle: 'italic' },
-  buttonRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 },
-  actionBtn: { flex: 1, padding: 10, borderRadius: 8, alignItems: 'center', marginHorizontal: 5 },
-  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  emptyText: { textAlign: 'center', marginTop: 50, color: '#95a5a6', fontSize: 16 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 10, borderRadius: 5, fontSize: 16 },
-  modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 20 },
-  modalContent: { backgroundColor: '#fff', padding: 20, borderRadius: 10 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  label: { fontSize: 16, fontWeight: '600', marginTop: 15, marginBottom: 10 },
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
-  modalBtn: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center', marginHorizontal: 5 },
-  modalBtnText: { color: '#fff', fontWeight: 'bold' },
+  
+  ticketCard: { backgroundColor: '#fff', borderRadius: 24, padding: 20, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 10, elevation: 2 },
+  ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  docInfo: { flexDirection: 'row', alignItems: 'center' },
+  avatarMini: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  doctorName: { fontSize: 16, fontWeight: 'bold', color: '#1e293b' },
+  statusBadge: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 },
+  statusText: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
+  
+  ticketBody: { backgroundColor: '#f8fafc', padding: 16, borderRadius: 16, marginBottom: 16 },
+  dateTimeRow: { flexDirection: 'row', alignItems: 'center' },
+  dateTimeText: { marginLeft: 6, color: '#334155', fontWeight: '600', fontSize: 14 },
+  reasonText: { color: '#64748b', fontSize: 13, marginTop: 8, fontStyle: 'italic' },
+  
+  noteContainer: { backgroundColor: '#f1f5f9', padding: 14, borderRadius: 16, marginBottom: 16 },
+  noteLabel: { fontWeight: '700', color: '#475569', fontSize: 12, marginBottom: 4, textTransform: 'uppercase' },
+  noteText: { color: '#334155', fontSize: 14 },
+  
+  buttonRow: { flexDirection: 'row', gap: 10 },
+  actionBtn: { flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
+  btnText: { fontWeight: '700', fontSize: 14 },
+  
+  emptyText: { textAlign: 'center', marginTop: 50, color: '#94a3b8', fontSize: 15 },
+  
+  modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(15, 23, 42, 0.4)', padding: 20 },
+  modalContent: { backgroundColor: '#fff', padding: 24, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1e293b', marginBottom: 20, textAlign: 'center' },
+  label: { fontSize: 14, fontWeight: '600', color: '#64748b', marginBottom: 8, marginTop: 12 },
+  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#f1f5f9', padding: 16, borderRadius: 16, fontSize: 15, color: '#1e293b' },
+  
+  modalButtons: { flexDirection: 'row', gap: 12, marginTop: 24 },
+  modalBtn: { flex: 1, paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
+  modalBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 });
 
 export default MyAppointmentsScreen;
