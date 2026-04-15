@@ -17,7 +17,9 @@
     "rateDoctor": "Rate Doctor",
     "doctorReviews": "Doctor Reviews",
     "ambulance": "Ambulance",
-    "appointments": "Appointments"
+    "appointments": "Appointments",
+    "healthShorts": "Health Shorts",
+    "awareness": "Health Awareness"
   },
   "home": {
     "title": "Find Your Consultation",
@@ -69,7 +71,10 @@
     "logoutConfirmTitle": "Logout",
     "logoutConfirmMessage": "Are you sure you want to log out?",
     "logout": "Logout",
-    "sosError": "Could not send SOS alert."
+    "sosError": "Could not send SOS alert.",
+    "healthShortsAction": "Health Shorts",
+    "awareness": "Health Awareness",
+    "awarenessSubtitle": "Daily health tips for your family"
   },
   "doctorDiscovery": {
     "findSpecialist": "Find a Specialist",
@@ -202,6 +207,17 @@
     "loginPrompt": "Already have an account? Login",
     "registerSuccess": "Account created! Please login.",
     "registerFail": "Something went wrong"
+  },
+  "healthShorts": {
+    "title": "Health Shorts + Daily Tips",
+    "tipOfDay": "Aaj ka Tip",
+    "tipOfDaySubtitle": "Tip of the Day",
+    "doctorVerified": "Doctor Verified ✅",
+    "audio": "Audio",
+    "like": "Like",
+    "save": "Save",
+    "share": "Share",
+    "offlineMode": "Offline preload ready"
   },
   "common": {
     "error": "Error",

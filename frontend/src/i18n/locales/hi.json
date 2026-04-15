@@ -17,7 +17,9 @@
     "rateDoctor": "डॉक्टर रेट करें",
     "doctorReviews": "डॉक्टर रिव्यू",
     "ambulance": "एम्बुलेंस",
-    "appointments": "अपॉइंटमेंट्स"
+    "appointments": "अपॉइंटमेंट्स",
+    "healthShorts": "हेल्थ शॉर्ट्स",
+    "awareness": "स्वास्थ्य सलाह"
   },
   "home": {
     "title": "अपना परामर्श खोजें",
@@ -69,7 +71,10 @@
     "logoutConfirmTitle": "लॉग आउट",
     "logoutConfirmMessage": "क्या आप वाकई लॉग आउट करना चाहते हैं?",
     "logout": "लॉग आउट",
-    "sosError": "SOS अलर्ट भेजा नहीं जा सका।"
+    "sosError": "SOS अलर्ट भेजा नहीं जा सका।",
+    "healthShortsAction": "हेल्थ शॉर्ट्स",
+    "awareness": "स्वास्थ्य सलाह",
+    "awarenessSubtitle": "छोटे और सरल स्वास्थ्य टिप्स"
 
   },
   "medicine": {
@@ -221,6 +226,17 @@
     "loginPrompt": "पहले से अकाउंट है? लॉगिन करें",
     "registerSuccess": "खाता बना लिया गया! कृपया लॉगिन करें।",
     "registerFail": "कुछ गलत हो गया"
+  },
+  "healthShorts": {
+    "title": "हेल्थ शॉर्ट्स + दैनिक टिप्स",
+    "tipOfDay": "आज का टिप",
+    "tipOfDaySubtitle": "Tip of the Day",
+    "doctorVerified": "डॉक्टर द्वारा सत्यापित ✅",
+    "audio": "ऑडियो",
+    "like": "लाइक",
+    "save": "सहेजें",
+    "share": "साझा करें",
+    "offlineMode": "ऑफलाइन पूर्व लोड तैयार"
   },
   "common": {
     "error": "त्रुटि",

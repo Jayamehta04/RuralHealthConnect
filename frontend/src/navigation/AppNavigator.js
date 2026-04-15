@@ -25,6 +25,8 @@ import RateDoctorScreen from '../screens/RateDoctorScreen';
 import ScheduleSettingsScreen from '../screens/ScheduleSettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import DoctorReviewsScreen from '../screens/DoctorReviewsScreen';
+import HealthShortsScreen from '../screens/HealthShortsScreen';
+import AwarenessScreen from '../screens/AwarenessScreen';
 
 const Stack = createStackNavigator();
 
@@ -58,6 +60,8 @@ const AppNavigator = () => {
             <Stack.Screen name="AddMedicine" component={AddMedicineScreen} options={{ title: t('navigation.addMedicine') }} />
             <Stack.Screen name="Pharmacy" component={PharmacyScreen} options={{ title: t('navigation.pharmacy') }} />
             <Stack.Screen name="DoctorDiscovery" component={DoctorDiscoveryScreen} options={{ title: t('navigation.discoverDoctors') }} />
+            <Stack.Screen name="HealthShorts" component={HealthShortsScreen} options={{ title: t('navigation.healthShorts') }} />
+            <Stack.Screen name="Awareness" component={AwarenessScreen} options={{ title: t('navigation.awareness') }} />
             <Stack.Screen name="DoctorDetails" component={DoctorDetailsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: t('navigation.chat') }} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: t('navigation.chatConversation') }} />

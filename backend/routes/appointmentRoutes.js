@@ -25,7 +25,7 @@ router.get('/doctor-appointments', protect, getDoctorAppointments);
 router.get('/my-prescriptions', protect, getMyPrescriptions);
 router.get('/doctor-prescriptions', protect, getDoctorPrescriptions);
 
-router.put('/:id', protect, updateAppointmentStatus);  // legacy generic update
+router.put('/:id', protect, updateAppointmentStatus);  
 router.put('/:id/accept', protect, acceptAppointment);
 router.put('/:id/reject', protect, rejectAppointment);
 router.put('/:id/complete', protect, completeAppointment);

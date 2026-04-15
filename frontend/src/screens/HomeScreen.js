@@ -276,15 +276,6 @@ const HomeScreen = ({ navigation }) => {
         )}
       </View>
 
-      <View style={styles.actionsGrid}>
-        <QuickAction icon="add-circle-outline" label={t('home.addMedicineAction')} color="#16a34a" onPress={() => navigation.navigate('AddMedicine')} />
-        <QuickAction icon="alarm-outline" label={t('home.remindersAction')} color="#059669" onPress={() => navigation.navigate('MedicineVault')} />
-      </View>
-      <View style={styles.actionsGrid}>
-        <QuickAction icon="medkit-outline" label={t('home.consultDoctorAction')} color="#0ea5e9" onPress={() => navigation.navigate('DoctorDiscovery')} />
-        <QuickAction icon="cart-outline" label={t('home.buyMedicineAction')} color="#f97316" onPress={() => navigation.navigate('Pharmacy')} />
-      </View>
-
       <Text style={styles.sectionHeader}>{t('home.emergencyAction')}</Text>
       <View style={styles.emergencyRow}>
         <TouchableOpacity style={styles.sosCard} onPress={handleSOS} onLongPress={handleCallAmbulance}>
@@ -320,6 +311,16 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.featureItemText}>{t('home.order')}</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity style={styles.awarenessCard} onPress={() => navigation.navigate('Awareness')}>
+        <View style={styles.awarenessIconWrap}>
+          <Ionicons name="bulb" size={24} color="#0f766e" />
+        </View>
+        <View style={styles.awarenessInfo}>
+          <Text style={styles.awarenessTitle}>{t('home.awareness')}</Text>
+          <Text style={styles.awarenessSubtitle}>{t('home.awarenessSubtitle')}</Text>
+        </View>
+      </TouchableOpacity>
 
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#94a3b8" />
@@ -525,6 +526,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginBottom: 8
   },
   featureItemText: { fontSize: 12, color: '#334155', fontWeight: '600', textAlign: 'center' },
+  awarenessCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 18, padding: 16, marginBottom: 24,
+    borderWidth: 1, borderColor: '#d1fae5',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 2
+  },
+  awarenessIconWrap: {
+    width: 52, height: 52, borderRadius: 16, backgroundColor: '#d1fae5',
+    justifyContent: 'center', alignItems: 'center', marginRight: 14
+  },
+  awarenessInfo: { flex: 1 },
+  awarenessTitle: { fontSize: 16, fontWeight: '800', color: '#0f766e' },
+  awarenessSubtitle: { fontSize: 13, color: '#475569', marginTop: 4 },
 
   searchContainer: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',

@@ -28,6 +28,7 @@ app.use('/api/pharmacy', require('./routes/pharmacyRoutes'));
 app.use('/api/medical-records', require('./routes/medicalRecordRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
+app.use('/api/healthshorts', require('./routes/healthShortsRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 const chatRoute = require('./routes/chatRoutes');
 app.use('/api/chat', chatRoute);
