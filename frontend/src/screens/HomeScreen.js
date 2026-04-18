@@ -222,10 +222,6 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.docInfoCol}>
           <Text style={styles.docItemName}>{t('home.doctorPrefix')} {item.name}</Text>
           <Text style={styles.docItemSpec}>{item.normalizedSpecialization}</Text>
-          <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#f59e0b" />
-            <Text style={styles.docItemExp}> {item.averageRating ? item.averageRating.toFixed(1) : '4.5'} • {item.experience || '10'} {t('home.years')}</Text>
-          </View>
           <View style={styles.badgeContainer}>
             <View style={styles.availableBadge}><Text style={styles.badgeText}>{t('home.available')}</Text></View>
           </View>
@@ -259,22 +255,24 @@ const HomeScreen = ({ navigation }) => {
 
   const renderDashboardContent = () => (
     <View style={styles.dashboardContainer}>
-      <Text style={styles.sectionHeader}>{t('home.todayMedicines')}</Text>
-      <View style={styles.todayCard}>
-        {todayMedicines.length > 0 ? (
-          todayMedicines.map((item) => (
-            <View key={item._id} style={styles.medicineRow}>
-              <View style={styles.medicineDot} />
-              <View style={styles.medicineItemText}>
-                <Text style={styles.medicineName}>{item.name} • {item.dosage}</Text>
-                <Text style={styles.medicineTime}>{item.time}</Text>
-              </View>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.emptyText}>{t('home.noTodayMedicines')}</Text>
-        )}
-      </View>
+      <Text style={styles.sectionHeader}>{i18n.language === 'hi' ? 'मेरी बुकिंग' : 'My Bookings'}</Text>
+      <TouchableOpacity 
+        style={styles.todayCard}
+        onPress={() => navigation.navigate('MyAppointments')}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={[styles.medicineDot, { backgroundColor: '#0f766e', width: 12, height: 12, borderRadius: 6, marginTop: 0, marginRight: 14 }]} />
+          <View style={styles.medicineItemText}>
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f766e' }}>
+              {i18n.language === 'hi' ? 'बुकिंग देखें' : 'View My Booking'}
+            </Text>
+            <Text style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>
+               {i18n.language === 'hi' ? 'अपने डॉक्टर के अपॉइंटमेंट चेक करें' : 'Check your doctor appointments'}
+            </Text>
+          </View>
+          <Ionicons name="calendar" size={24} color="#0f766e" />
+        </View>
+      </TouchableOpacity>
 
       <Text style={styles.sectionHeader}>{t('home.emergencyAction')}</Text>
       <View style={styles.emergencyRow}>

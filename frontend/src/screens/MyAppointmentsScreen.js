@@ -8,7 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 const MyAppointmentsScreen = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleModal, setRescheduleModal] = useState(false);
@@ -23,6 +23,10 @@ const MyAppointmentsScreen = () => {
 
     const unsubscribe = navigation.addListener('focus', () => {
       fetchMyAppointments();
+    });
+
+    navigation.setOptions({
+      title: i18n.language === 'hi' ? 'मेरी बुकिंग' : 'My Bookings',
     });
 
     return unsubscribe;
@@ -198,7 +202,7 @@ const MyAppointmentsScreen = () => {
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>{t('appointments.empty')}</Text>
+          <Text style={styles.emptyText}>{i18n.language === 'hi' ? 'कोई बुकिंग नहीं मिली' : 'No bookings found'}</Text>
         }
       />
 
