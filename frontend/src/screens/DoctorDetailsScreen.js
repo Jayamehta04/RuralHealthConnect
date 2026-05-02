@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { CallContext } from '../context/CallContext';
+
 
 const DoctorDetailsScreen = ({ route, navigation }) => {
   const { doctorId, doctor } = route.params;
+  const { startCall } = useContext(CallContext);
+
 
   return (
     <View style={styles.container}>
@@ -23,13 +27,22 @@ const DoctorDetailsScreen = ({ route, navigation }) => {
             
             {/* Contact Action Circles */}
             <View style={styles.actionCirclesRow}>
-                <TouchableOpacity style={[styles.actionCircle, {backgroundColor: '#e0f2fe'}]}>
+                <TouchableOpacity 
+                    style={[styles.actionCircle, {backgroundColor: '#e0f2fe'}]}
+                    onPress={() => navigation.navigate('ChatConversation', { peerId: doctor?._id || doctorId, peerName: doctor?.name || 'Doctor' })}
+                >
                     <Ionicons name="mail" size={18} color="#0284c7" />
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionCircle, {backgroundColor: '#fce7f3'}]}>
+                <TouchableOpacity 
+                    style={[styles.actionCircle, {backgroundColor: '#fce7f3'}]}
+                    onPress={() => startCall(doctor?._id || doctorId, doctor?.name || 'Doctor', false, doctor?.profilePicture || doctor?.image)}
+                >
                     <Ionicons name="call" size={18} color="#db2777" />
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionCircle, {backgroundColor: '#f1f5f9'}]}>
+                <TouchableOpacity 
+                    style={[styles.actionCircle, {backgroundColor: '#f1f5f9'}]}
+                    onPress={() => startCall(doctor?._id || doctorId, doctor?.name || 'Doctor', true, doctor?.profilePicture || doctor?.image)}
+                >
                     <Ionicons name="videocam" size={18} color="#94a3b8" />
                 </TouchableOpacity>
             </View>
@@ -37,8 +50,15 @@ const DoctorDetailsScreen = ({ route, navigation }) => {
           
           <View style={styles.profileRight}>
             <View style={styles.imageWrapper}>
-                {/* Fallback avatar if no image provided */}
-                <Ionicons name="person" size={80} color="#fff" style={{marginTop: 20}} />
+                {doctor?.profilePicture || doctor?.image ? (
+                  <Image 
+                    source={{ uri: doctor.profilePicture || doctor.image }} 
+                    style={{ width: '100%', height: '100%' }} 
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Ionicons name="person" size={80} color="#fff" style={{marginTop: 20}} />
+                )}
             </View>
           </View>
         </View>

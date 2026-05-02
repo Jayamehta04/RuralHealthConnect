@@ -149,7 +149,7 @@ const HealthShortsScreen = () => {
   const renderItem = ({ item, index }) => {
     const isActive = index === activeIndex;
     return (
-      <View style={[styles.itemContainer, { height: ITEM_HEIGHT }]}> 
+      <View style={[styles.itemContainer, { height: ITEM_HEIGHT }]}>
         {item.type === 'video' ? (
           <Video
             source={{ uri: item.video_url }}
@@ -171,7 +171,7 @@ const HealthShortsScreen = () => {
           </View>
         )}
 
-        <View style={styles.overlay}> 
+        <View style={styles.overlay}>
           <View style={styles.categoryRow}>
             <View style={styles.categoryBadge}><Text style={styles.categoryText}>{item.category}</Text></View>
             {item.doctor_verified && (
@@ -319,5 +319,4 @@ const getLocalSample = () => [
     doctor_verified: true
   }
 ];
-
 export default HealthShortsScreen;

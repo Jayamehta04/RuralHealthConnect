@@ -49,7 +49,8 @@ exports.updateUserProfile = async (req, res) => {
 
         // Profile Picture Update
         if (req.file) {
-            user.profilePicture = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            const BASE_URL = process.env.BASE_URL || `http://${req.get('host')}`;
+            user.profilePicture = `${BASE_URL}/uploads/${req.file.filename}`;
         }
 
         const updatedUser = await user.save();

@@ -27,7 +27,7 @@ exports.getConversation = async (req, res) => {
 exports.sendMessage = async (req, res) => {
   try {
     const sender = req.user.id;
-    const { receiverId, text } = req.body;
+    const { receiverId, text, senderImage, text_en, text_hi } = req.body;
 
     if (!receiverId || !text) {
       return res.status(400).json({ message: 'receiverId and text are required' });
@@ -38,7 +38,7 @@ exports.sendMessage = async (req, res) => {
       return res.status(404).json({ message: 'Receiver not found' });
     }
 
-    const message = await Message.create({ sender, receiver: receiverId, text });
+    const message = await Message.create({ sender, receiver: receiverId, text, senderImage, text_en, text_hi });
 
     await sendNotification({
       user: receiverId,

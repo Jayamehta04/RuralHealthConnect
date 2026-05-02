@@ -1,59 +1,57 @@
 const Medicine = require('../models/Medicine');
 
-// Add a new medicine reminder
 exports.addMedicine = async (req, res) => {
   try {
-    const { name, dosage, time, days, notificationId } = req.body;
-    const newMed = new Medicine({
-      patient: req.user.id,
-      name,
-      dosage,
-      time,
-      days,
-      notificationId
-    });
-    await newMed.save();
-    res.status(201).json(newMed);
-  } catch (error) {
-    res.status(500).json({ message: "Error adding medicine" });
-  }
-};
+    const { name, dosage, times, duration } = req.body;
+    const userId = req.user.id;
 
-// Get all medicines for the logged-in patient
-exports.getMyMedicines = async (req, res) => {
-  try {
-    const meds = await Medicine.find({ patient: req.user.id }).sort({ time: 1 });
-    res.status(200).json(meds);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching medicines" });
-  }
-};
-
-exports.toggleTaken = async (req, res) => {
-  try {
-    const medicine = await Medicine.findById(req.params.id);
-    if (!medicine) return res.status(404).json({ message: "Medicine not found" });
-
-    medicine.isTaken = !medicine.isTaken;
-    await medicine.save();
-    
-    res.status(200).json(medicine);
-  } catch (error) {
-    res.status(500).json({ message: "Error updating status" });
-  }
-};
-
-exports.deleteMedicine = async (req, res) => {
-  try {
-    const medicine = await Medicine.findById(req.params.id);
-    if (!medicine) return res.status(404).json({ message: "Medicine not found" });
-    if (medicine.patient.toString() !== req.user.id) {
-      return res.status(401).json({ message: "Not authorized" });
+    if (!name || !dosage || !times || !duration) {
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
-    await medicine.deleteOne();
-    res.status(200).json({ message: "Medicine removed" });
+    const newMedicine = new Medicine({
+      userId,
+      name,
+      dosage,
+      times,
+      duration: parseInt(duration),
+      startDate: new Date()
+    });
+
+    await newMedicine.save();
+    res.status(201).json({ message: 'Medicine added successfully', medicine: newMedicine });
   } catch (error) {
-    res.status(500).json({ message: "Server error during deletion" });
+    console.error('Error adding medicine:', error);
+    res.status(500).json({ message: 'Server error adding medicine' });
+  }
+};
+
+exports.getTodaysMedicines = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized access' });
+    }
+
+    const medicines = await Medicine.find({ userId }).sort({ createdAt: -1 });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Filter valid medicines based on startDate + duration
+    const validMedicines = medicines.filter(med => {
+      const startDate = new Date(med.startDate);
+      startDate.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + med.duration);
+      
+      return today >= startDate && today < endDate;
+    });
+
+    res.status(200).json({ medicines: validMedicines });
+  } catch (error) {
+    console.error('Error fetching todays medicines:', error);
+    res.status(500).json({ message: 'Server error fetching medicines' });
   }
 };

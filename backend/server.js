@@ -30,8 +30,10 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/healthshorts', require('./routes/healthShortsRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/tips', require('./routes/tipRoutes'));
 const chatRoute = require('./routes/chatRoutes');
 app.use('/api/chat', chatRoute);
+app.use('/api/agora', require('./routes/agoraRoutes'));
 console.log('Loaded chat routes:', !!chatRoute);
 
 // Basic Route for testing

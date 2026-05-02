@@ -11,7 +11,7 @@ import { AuthContext } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
 const ProfileScreen = () => {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, login } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -103,19 +103,35 @@ const ProfileScreen = () => {
           type
         });
 
-        headers['Content-Type'] = 'multipart/form-data';
+        // Use core fetch to avoid React Native Axios Form-Data Network Error bugs
+        const response = await fetch(`${BASE_URL}/api/users/profile`, {
+          method: 'PUT',
+          headers: headers,
+          body: bodyData
+        });
+        
+        if (!response.ok) {
+          throw new Error('Network Error');
+        }
       } else {
         bodyData = { ...formData };
+        await axios.put(`${BASE_URL}/api/users/profile`, bodyData, { headers });
       }
 
-      await axios.put(`${BASE_URL}/api/users/profile`, bodyData, { headers });
       Alert.alert(t('common.success'), t('profile.saveSuccess'));
       
+      
+      // Update Global Context exactly as instructed, isolating pure Auth headers from mutated FormData headers.
+      const meRes = await axios.get(`${BASE_URL}/api/auth/me`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
+      await login(meRes.data, token);
+
       // Clear local image explicitly to default to showing internet URL fetched on next reload
       setLocalImage(null);
       fetchProfile();
     } catch (err) {
-      console.error('Save profile error:', err);
+      console.log('Save profile error:', err.message || err);
       Alert.alert(t('common.error'), t('profile.saveFail'));
     } finally {
       setSaving(false);

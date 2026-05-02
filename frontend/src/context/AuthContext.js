@@ -65,7 +65,11 @@ export const AuthProvider = ({ children }) => {
         auth: { token },
       });
 
-      socketClient.emit('join', { userId: user.id || user._id });
+      socketClient.on('connect', () => {
+        console.log('Connected:', socketClient.id);
+        socketClient.emit('register-user', user.id || user._id);
+      });
+
       socketClient.on('notification', (notification) => {
         console.log('Realtime notification received', notification);
         setUnreadCount((value) => value + 1);
@@ -87,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, unreadCount, setUnreadCount, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, unreadCount, setUnreadCount, login, logout, loading, socket }}>
       {children}
     </AuthContext.Provider>
   );

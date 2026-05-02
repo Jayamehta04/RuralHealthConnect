@@ -19,6 +19,7 @@
     "ambulance": "एम्बुलेंस",
     "appointments": "अपॉइंटमेंट्स",
     "healthShorts": "हेल्थ शॉर्ट्स",
+    "healthBlog": "स्वास्थ्य युक्तियाँ",
     "awareness": "स्वास्थ्य सलाह"
   },
   "home": {
@@ -26,7 +27,6 @@
     "greeting": "नमस्ते, {{name}}",
     "defaultUser": "उपयोगकर्ता",
     "brandTitle": "रूरल हेल्थ",
-    "bookPrompt": "अपॉइंटमेंट बुक करें",
     "specializations": "चिकित्सा विशेषज्ञता",
     "general": "सामान्य चिकित्सक",
     "cardiology": "हृदय रोग",
@@ -57,6 +57,14 @@
     "prescriptions": "प्रिस्क्रिप्शन देखें",
     "chat": "डॉक्टर से बात करें",
     "order": "दवाई खरीदें",
+    "bookings": "बुकिंग्स",
+    "askHealthQuestions": "स्वास्थ्य प्रश्न पूछें",
+    "chatWithAI": "AI असिस्टेंट से बात करें",
+    "healthTipsBlogs": "हेल्थ टिप्स और ब्लॉग",
+    "viewAwarenessTips": "जागरूकता और टिप्स देखें",
+    "healthBlogTitle": "दैनिक स्वास्थ्य ब्लॉग",
+    "healthBlogSubtitle": "चिकित्सकों द्वारा दिए गए टिप्स पढ़ें",
+    "allDoctors": "सभी डॉक्टर",
     "searchPlaceholder": "डॉक्टर खोजें...",
     "available": "उपलब्ध",
     "call": "कॉल करें",
@@ -75,25 +83,6 @@
     "healthShortsAction": "हेल्थ शॉर्ट्स",
     "awareness": "स्वास्थ्य सलाह",
     "awarenessSubtitle": "छोटे और सरल स्वास्थ्य टिप्स"
-
-  },
-  "medicine": {
-    "vaultTitle": "मेडिसिन वॉल्ट",
-    "vaultSub": "दवा ली गई: टैप करें • हटाने के लिए होल्ड करें",
-    "empty": "अभी तक कोई दवा नहीं जोड़ी गई है।",
-    "newTitle": "नई दवा जोड़ें",
-    "name": "दवाई का नाम",
-    "dosage": "खुराक",
-    "timeLabel": "समय",
-    "duration": "अवधि (दिन)",
-    "addBtn": "वॉल्ट में जोड़ें",
-    "saving": "सेव कर रहे हैं...",
-    "success": "दवा सफलतापूर्वक जुड़ गई है!",
-    "fail": "दवा सेव नहीं हो सकी।",
-    "errorFields": "कृपया सभी विवरण भरें",
-    "errorTime": "अमान्य समय प्रारूप",
-    "notifTitle": "आपकी दवाई का समय हो गया है! 💊",
-    "notifBody": "यह आपकी {{dosage}} {{name}} लेने का समय है।"
   },
   "doctorDiscovery": {
     "findSpecialist": "विशेषज्ञ खोजें",
@@ -246,4 +235,3 @@
     "confirm": "पुष्टि करें"
   }
 }
-

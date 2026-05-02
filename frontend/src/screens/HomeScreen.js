@@ -26,18 +26,21 @@ import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import AICard from '../components/AICard';
+import ScreenWrapper from '../components/ScreenWrapper';
 import { getMedicines } from '../utils/medicineStorage';
 
 const HomeScreen = ({ navigation }) => {
   const [doctors, setDoctors] = useState([]);
   const [medicines, setMedicines] = useState([]);
-  const [selectedSpecialization, setSelectedSpecialization] = useState('All');
+  const [selectedSpecialization, setSelectedSpecialization] = useState('allDoctors');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useIsFocused();
   const { t, i18n } = useTranslation();
 
+  const [currentUser, setCurrentUser] = useState(user);
   const { token, logout, user, unreadCount, setUnreadCount } = useContext(AuthContext);
 
   const changeLanguage = (lng) => {
@@ -48,12 +51,15 @@ const HomeScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchDoctors();
-    fetchMedicines();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    if (isFocused) fetchNotificationCount();
-  }, [isFocused]);
+    if (isFocused) {
+      fetchNotificationCount();
+      fetchTodaysMedicines();
+      fetchUserProfile();
+    }
+  }, [isFocused, token, user]);
 
   const fetchNotificationCount = async () => {
     if (!token) return;
@@ -68,6 +74,18 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const fetchUserProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${BASE_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCurrentUser(res.data);
+    } catch (err) {
+      console.error('Fetch profile error:', err);
+    }
+  };
+
   const fetchDoctors = async () => {
     if (!token) {
       setLoading(false);
@@ -78,11 +96,7 @@ const HomeScreen = ({ navigation }) => {
       const response = await axios.get(`${BASE_URL}/api/doctors`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const normalizedData = response.data.map(doc => ({
-        ...doc,
-        normalizedSpecialization: normalizeSpecialization(doc.specialization)
-      }));
-      setDoctors(normalizedData);
+      setDoctors(response.data);
     } catch (error) {
       console.error("Fetch Error:", error.message);
       if (error.response && error.response.status === 401) {
@@ -97,12 +111,28 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const fetchMedicines = async () => {
+  const fetchTodaysMedicines = async () => {
     try {
-      const data = await getMedicines();
-      setMedicines(data || []);
+      const allMeds = await getMedicines();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todaysMeds = allMeds.filter(med => {
+        if (!med.startDate || !med.duration) return true;
+        const start = new Date(med.startDate);
+        start.setHours(0, 0, 0, 0);
+
+        if (today < start) return false;
+
+        const diffTime = today.getTime() - start.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays < med.duration;
+      });
+
+      setMedicines(todaysMeds);
     } catch (error) {
-      console.error('Fetch medicines error:', error);
+      console.error('Fetch today medicines error:', error);
     }
   };
 
@@ -140,73 +170,54 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const STANDARDIZED_CATEGORIES = [
-    'General Physician',
-    'Cardiologist',
-    'Dermatologist',
-    'Gynecologist',
-    'Pediatrician',
-    'Orthopedic',
-    'Neurologist',
-    'ENT Specialist',
-    'Psychiatrist',
-    'Dentist'
+  const normalizeSpec = (spec) => {
+    if (!spec) return 'general';
+    const s = spec.toLowerCase().trim();
+    if (s.includes('cardio')) return 'cardiology';
+    if (s.includes('dermato')) return 'dermatology';
+    if (s.includes('neuro')) return 'neurology';
+    if (s.includes('ortho')) return 'orthopedics';
+    if (s.includes('gyneco') || s.includes('gynaeco')) return 'gynecology';
+    if (s.includes('pediatr') || s.includes('paediatr')) return 'pediatrics';
+    if (s.includes('ent')) return 'ent';
+    if (s.includes('psychiat')) return 'psychiatry';
+    if (s.includes('dentist') || s.includes('dental')) return 'dentist';
+    if (s.includes('general') || s.includes('physician')) return 'general';
+    return s;
+  };
+
+  const getTranslatedSpec = (spec) => {
+    if (spec === 'allDoctors') return t('home.allDoctors');
+    const translated = t(`home.${spec}`);
+    return translated !== `home.${spec}` ? translated : (spec.charAt(0).toUpperCase() + spec.slice(1));
+  };
+
+  const specializations = [
+    "allDoctors",
+    ...new Set(doctors.map(doc => normalizeSpec(doc.specialization)).filter(Boolean))
   ];
-
-  const normalizeSpecialization = (spec) => {
-    if (!spec) return 'General Physician';
-    const s = spec.toLowerCase();
-    if (s.includes('heart') || s.includes('cardio')) return 'Cardiologist';
-    if (s.includes('derm') || s.includes('skin')) return 'Dermatologist';
-    if (s.includes('gyn') || s.includes('women')) return 'Gynecologist';
-    if (s.includes('ped') || s.includes('child')) return 'Pediatrician';
-    if (s.includes('ortho') || s.includes('bone')) return 'Orthopedic';
-    if (s.includes('neuro') || s.includes('brain')) return 'Neurologist';
-    if (s.includes('ent') || s.includes('ear')) return 'ENT Specialist';
-    if (s.includes('psych') || s.includes('mental')) return 'Psychiatrist';
-    if (s.includes('dent') || s.includes('tooth') || s.includes('teeth')) return 'Dentist';
-    return 'General Physician';
-  };
-
-  const presentCategories = STANDARDIZED_CATEGORIES.filter(cat =>
-    doctors.some(d => d.normalizedSpecialization === cat)
-  );
-  const uniqueSpecializations = ['All', ...presentCategories];
-
-  const categoryLabels = {
-    All: t('home.general'),
-    'General Physician': t('home.general'),
-    Cardiologist: t('home.cardiology'),
-    Dermatologist: t('home.dermatology'),
-    Gynecologist: t('home.gynecology'),
-    Pediatrician: t('home.pediatrics'),
-    Orthopedic: t('home.orthopedics'),
-    Neurologist: t('home.neurology'),
-    'ENT Specialist': t('home.ent'),
-    Psychiatrist: t('home.psychiatry'),
-    Dentist: t('home.dentist')
-  };
 
   const getCategoryTheme = (spec) => {
     switch (spec) {
-      case 'All': return { icon: 'apps' };
-      case 'Cardiologist': return { icon: 'heart' };
-      case 'Dermatologist': return { icon: 'body' };
-      case 'Gynecologist': return { icon: 'woman' };
-      case 'Pediatrician': return { icon: 'happy' };
-      case 'Orthopedic': return { icon: 'fitness' };
-      case 'Neurologist': return { icon: 'pulse' }; // 'pulse' or 'git-network'
-      case 'ENT Specialist': return { icon: 'ear' };
-      case 'Psychiatrist': return { icon: 'headset' }; // default to headset, not ideal for brain but standard ionicon
-      case 'Dentist': return { icon: 'medical' };
-      case 'General Physician':
-      default: return { icon: 'medkit' };
+      case 'allDoctors': return 'apps';
+      case 'cardiology': return 'heart';
+      case 'dermatology': return 'body';
+      case 'gynecology': return 'woman';
+      case 'pediatrics': return 'happy';
+      case 'orthopedics': return 'fitness';
+      case 'neurology': return 'pulse';
+      case 'ent': return 'ear';
+      case 'psychiatry': return 'headset';
+      case 'dentist': return 'medical';
+      case 'general': return 'medkit';
+      default: return 'medical';
     }
   };
 
   const filteredDoctors = doctors.filter(doc => {
-    const matchesSpec = selectedSpecialization === 'All' || doc.normalizedSpecialization === selectedSpecialization;
-    const matchesSearch = doc.name?.toLowerCase().includes(searchQuery.toLowerCase()) || doc.normalizedSpecialization?.toLowerCase().includes(searchQuery.toLowerCase());
+    const docSpec = normalizeSpec(doc.specialization);
+    const matchesSpec = selectedSpecialization === 'allDoctors' || docSpec === selectedSpecialization;
+    const matchesSearch = doc.name?.toLowerCase().includes(searchQuery.toLowerCase()) || doc.specialization?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSpec && matchesSearch;
   });
 
@@ -217,11 +228,22 @@ const HomeScreen = ({ navigation }) => {
     >
       <View style={styles.docItemLeft}>
         <View style={styles.docMiniAvatar}>
-          <Ionicons name="person" size={28} color="#0f766e" />
+          <Image
+            source={
+              item.profilePicture || item.image
+                ? { uri: item.profilePicture || item.image }
+                : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
+            }
+            style={{ width: 50, height: 50, borderRadius: 14 }}
+          />
         </View>
         <View style={styles.docInfoCol}>
           <Text style={styles.docItemName}>{t('home.doctorPrefix')} {item.name}</Text>
-          <Text style={styles.docItemSpec}>{item.normalizedSpecialization}</Text>
+          <Text style={styles.docItemSpec}>{getTranslatedSpec(normalizeSpec(item.specialization))}</Text>
+          <View style={styles.ratingRow}>
+            <Ionicons name="star" size={14} color="#f59e0b" />
+            <Text style={styles.docItemExp}> {item.averageRating ? item.averageRating.toFixed(1) : '4.5'} • {item.experience || '10'} {t('home.years')}</Text>
+          </View>
           <View style={styles.badgeContainer}>
             <View style={styles.availableBadge}><Text style={styles.badgeText}>{t('home.available')}</Text></View>
           </View>
@@ -244,36 +266,24 @@ const HomeScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  const todayMedicines = medicines.slice(0, 3);
-
-  const QuickAction = ({ icon, label, color, onPress }) => (
-    <TouchableOpacity style={[styles.actionButton, { backgroundColor: color }]} onPress={onPress}>
-      <Ionicons name={icon} size={28} color="#fff" />
-      <Text style={styles.actionText}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   const renderDashboardContent = () => (
     <View style={styles.dashboardContainer}>
-      <Text style={styles.sectionHeader}>{i18n.language === 'hi' ? 'मेरी बुकिंग' : 'My Bookings'}</Text>
-      <TouchableOpacity 
-        style={styles.todayCard}
-        onPress={() => navigation.navigate('MyAppointments')}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={[styles.medicineDot, { backgroundColor: '#0f766e', width: 12, height: 12, borderRadius: 6, marginTop: 0, marginRight: 14 }]} />
-          <View style={styles.medicineItemText}>
-            <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f766e' }}>
-              {i18n.language === 'hi' ? 'बुकिंग देखें' : 'View My Booking'}
-            </Text>
-            <Text style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>
-               {i18n.language === 'hi' ? 'अपने डॉक्टर के अपॉइंटमेंट चेक करें' : 'Check your doctor appointments'}
-            </Text>
-          </View>
-          <Ionicons name="calendar" size={24} color="#0f766e" />
-        </View>
-      </TouchableOpacity>
-
+      <Text style={styles.sectionHeader}>{t('home.todayMedicines', "Today's Medicines")}</Text>
+      <View style={styles.todayCard}>
+        {medicines.length > 0 ? (
+          medicines.map((item) => (
+            <View key={item._id} style={styles.medicineRow}>
+              <View style={styles.medicineDot} />
+              <View style={styles.medicineItemText}>
+                <Text style={styles.medicineName}>{item.name} • {item.dosage}</Text>
+                <Text style={styles.medicineTime}>{item.times ? item.times.join(', ') : item.time}</Text>
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyText}>{t('home.noTodayMedicines', 'No medicines scheduled for today.')}</Text>
+        )}
+      </View>
       <Text style={styles.sectionHeader}>{t('home.emergencyAction')}</Text>
       <View style={styles.emergencyRow}>
         <TouchableOpacity style={styles.sosCard} onPress={handleSOS} onLongPress={handleCallAmbulance}>
@@ -286,6 +296,11 @@ const HomeScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      <AICard
+        onAskPress={() => navigation.navigate('AIChat')}
+        onTipsPress={() => navigation.navigate('HealthAwareness')}
+      />
+
       <Text style={styles.sectionHeader}>{t('home.quickAccess')}</Text>
       <View style={styles.featureGrid}>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('MedicineVault')}>
@@ -296,29 +311,25 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.featureIconWrap}><Ionicons name="document-text" size={22} color="#0f766e" /></View>
           <Text style={styles.featureItemText}>{t('home.records')}</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('MyAppointments')}>
+          <View style={styles.featureIconWrap}><Ionicons name="calendar" size={22} color="#0f766e" /></View>
+          <Text style={styles.featureItemText}>{t('home.bookings')}</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('PrescriptionHistory')}>
           <View style={styles.featureIconWrap}><Ionicons name="receipt" size={22} color="#0f766e" /></View>
           <Text style={styles.featureItemText}>{t('home.prescriptions')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('ChatList')}>
+        <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('DoctorDiscovery')}>
           <View style={styles.featureIconWrap}><Ionicons name="chatbubbles" size={22} color="#0f766e" /></View>
-          <Text style={styles.featureItemText}>{t('home.chat')}</Text>
+          <Text style={styles.featureItemText}>{t('home.consultDoctorAction')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('Pharmacy')}>
           <View style={styles.featureIconWrap}><Ionicons name="cart" size={22} color="#0f766e" /></View>
-          <Text style={styles.featureItemText}>{t('home.order')}</Text>
+          <Text style={styles.featureItemText}>{t('home.buyMedicineAction')}</Text>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.awarenessCard} onPress={() => navigation.navigate('Awareness')}>
-        <View style={styles.awarenessIconWrap}>
-          <Ionicons name="bulb" size={24} color="#0f766e" />
-        </View>
-        <View style={styles.awarenessInfo}>
-          <Text style={styles.awarenessTitle}>{t('home.awareness')}</Text>
-          <Text style={styles.awarenessSubtitle}>{t('home.awarenessSubtitle')}</Text>
-        </View>
-      </TouchableOpacity>
+
 
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#94a3b8" />
@@ -334,8 +345,7 @@ const HomeScreen = ({ navigation }) => {
       <Text style={styles.sectionHeader}>{t('home.specializations')}</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catCardsContainer}>
-        {uniqueSpecializations.map((spec, idx) => {
-          const theme = getCategoryTheme(spec);
+        {specializations.map((spec, idx) => {
           const isSelected = selectedSpecialization === spec;
           return (
             <TouchableOpacity
@@ -350,9 +360,9 @@ const HomeScreen = ({ navigation }) => {
               }}
             >
               <View style={[styles.catIconWrap, isSelected ? styles.selectedIconWrap : styles.unselectedIconWrap]}>
-                <Ionicons name={theme.icon} size={28} color={isSelected ? '#fff' : '#0f766e'} />
+                <Ionicons name={getCategoryTheme(spec)} size={20} color={isSelected ? '#fff' : '#0f766e'} />
               </View>
-              <Text style={[styles.catPillText, isSelected && styles.selectedPillText]}>{categoryLabels[spec] || spec}</Text>
+              <Text style={[styles.catPillText, isSelected && styles.selectedPillText]}>{getTranslatedSpec(spec)}</Text>
             </TouchableOpacity>
           );
         })}
@@ -371,17 +381,24 @@ const HomeScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenWrapper>
       <StatusBar barStyle="dark-content" />
 
       {/* HEADER SECTION */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.avatarWrap}>
-            <Ionicons name="person-circle" size={42} color="#0f766e" />
+            <Image
+              source={
+                currentUser?.profilePicture
+                  ? { uri: currentUser.profilePicture }
+                  : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
+              }
+              style={{ width: 42, height: 42, borderRadius: 21 }}
+            />
           </TouchableOpacity>
           <View>
-            <Text style={styles.greetingText}>{t('home.greeting', { name: user?.name || t('home.defaultUser') })}</Text>
+            <Text style={styles.greetingText}>{t('home.greeting', { name: currentUser?.name || t('home.defaultUser') })}</Text>
             <Text style={styles.brandTitle}>{t('home.brandTitle')}</Text>
           </View>
         </View>
@@ -425,12 +442,12 @@ const HomeScreen = ({ navigation }) => {
           </View>
         }
       />
-    </View>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {

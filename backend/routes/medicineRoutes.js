@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { addMedicine, getMyMedicines, toggleTaken, deleteMedicine } = require('../controllers/medicineController');
-const { protect } = require('../middleware/authMiddleware');
+const medicineController = require('../controllers/medicineController');
+const { protect } = require('../middleware/authMiddleware'); // assuming standard auth middleware
 
-router.post('/add', protect, addMedicine);
-router.get('/my', protect, getMyMedicines);
-router.put('/toggle/:id', protect, toggleTaken);
-router.delete('/:id', protect, deleteMedicine);
+router.post('/add', protect, medicineController.addMedicine);
+router.get('/today', protect, medicineController.getTodaysMedicines);
 
 module.exports = router;

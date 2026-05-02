@@ -25,7 +25,7 @@ const CATEGORY_LABELS = {
   'Emergency': { en: 'Emergency', hi: 'आपातकाल' },
 };
 
-const AwarenessScreen = () => {
+const HealthBlogScreen = () => {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'hi' ? 'hi' : 'en';
   
@@ -257,4 +257,4 @@ const styles = StyleSheet.create({
   bulletText: { fontSize: 15, color: '#334155', lineHeight: 22, flex: 1 }
 });
 
-export default AwarenessScreen;
+export default HealthBlogScreen;

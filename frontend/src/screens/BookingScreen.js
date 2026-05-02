@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, Alert, TextInput, Pressable, TouchableOpacity, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, TextInput, Pressable, TouchableOpacity, Platform, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -101,8 +101,15 @@ const BookingScreen = ({ route, navigation }) => {
         <Text style={styles.title}>{t('booking.title')}</Text>
         
         <View style={styles.docInfoBox}>
-          <View style={styles.docIconBg}>
-            <Ionicons name="medical" size={24} color="#14b8a6" />
+          <View style={[styles.docIconBg, {overflow: 'visible', backgroundColor: 'transparent'}]}>
+            <Image 
+              source={
+                route.params.doctorProfilePicture || route.params.doctor?.profilePicture || route.params.doctor?.image
+                 ? { uri: route.params.doctorProfilePicture || route.params.doctor?.profilePicture || route.params.doctor?.image }
+                 : { uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }
+              }
+              style={{ width: 48, height: 48, borderRadius: 24 }}
+            />
           </View>
           <Text style={styles.docNameTitle}>{t('booking.doctorPrefix')} {doctorName}</Text>
         </View>

@@ -177,7 +177,8 @@ exports.getDoctorAvailableSlots = async (req, res) => {
 exports.getMyAppointments = async (req, res) => {
     try {
         const appointments = await Appointment.find({ patient: req.user.id })
-            .populate('doctor', '-password');
+            .populate('doctor', '-password')
+            .sort({ createdAt: -1 });
 
         const appointmentIds = appointments.map((appt) => appt._id);
         const feedbacks = await require('../models/Feedback').find({ appointment: { $in: appointmentIds } });

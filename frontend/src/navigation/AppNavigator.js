@@ -11,7 +11,7 @@ import MyAppointmentsScreen from '../screens/MyAppointmentsScreen';
 import DoctorDashboard from '../screens/DoctorDashboard';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import AmbulanceScreen from '../screens/AmbulanceScreen'; 
+import AmbulanceScreen from '../screens/AmbulanceScreen';
 import MedicineScreen from '../screens/MedicineScreen';
 import AddMedicineScreen from '../screens/AddMedicineScreen';
 import PharmacyScreen from '../screens/PharmacyScreen';
@@ -26,7 +26,9 @@ import ScheduleSettingsScreen from '../screens/ScheduleSettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import DoctorReviewsScreen from '../screens/DoctorReviewsScreen';
 import HealthShortsScreen from '../screens/HealthShortsScreen';
-import AwarenessScreen from '../screens/AwarenessScreen';
+import HealthAwarenessScreen from '../screens/HealthAwarenessScreen';
+import AIChatScreen from '../screens/AIChatScreen';
+import HealthBlogScreen from '../screens/HealthBlogScreen';
 
 const Stack = createStackNavigator();
 
@@ -37,7 +39,7 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator>
       {token ? (
-       
+
         user?.role === 'doctor' ? (
           <>
             <Stack.Screen name="DoctorHome" component={DoctorDashboard} options={{ title: t('navigation.doctorDashboard') }} />
@@ -48,6 +50,7 @@ const AppNavigator = () => {
             <Stack.Screen name="MedicalRecords" component={MedicalRecordScreen} options={{ title: t('navigation.medicalRecords') }} />
             <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: t('navigation.prescriptions') }} />
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: t('navigation.notifications') }} />
+            <Stack.Screen name="AIChat" component={AIChatScreen} options={{ headerShown: false }} />
           </>
         ) : (
           <>
@@ -61,7 +64,8 @@ const AppNavigator = () => {
             <Stack.Screen name="Pharmacy" component={PharmacyScreen} options={{ title: t('navigation.pharmacy') }} />
             <Stack.Screen name="DoctorDiscovery" component={DoctorDiscoveryScreen} options={{ title: t('navigation.discoverDoctors') }} />
             <Stack.Screen name="HealthShorts" component={HealthShortsScreen} options={{ title: t('navigation.healthShorts') }} />
-            <Stack.Screen name="Awareness" component={AwarenessScreen} options={{ title: t('navigation.awareness') }} />
+            <Stack.Screen name="HealthAwareness" component={HealthAwarenessScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="HealthBlog" component={HealthBlogScreen} options={{ title: t('navigation.awareness') || 'Health Tips' }} />
             <Stack.Screen name="DoctorDetails" component={DoctorDetailsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: t('navigation.chat') }} />
             <Stack.Screen name="ChatConversation" component={ChatConversationScreen} options={{ title: t('navigation.chatConversation') }} />
@@ -70,10 +74,11 @@ const AppNavigator = () => {
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: t('navigation.notifications') }} />
             <Stack.Screen name="RateDoctor" component={RateDoctorScreen} options={{ title: t('navigation.rateDoctor') }} />
             <Stack.Screen name="DoctorReviews" component={DoctorReviewsScreen} options={{ title: t('navigation.doctorReviews') }} />
+            <Stack.Screen name="AIChat" component={AIChatScreen} options={{ headerShown: false }} />
           </>
         )
       ) : (
-       
+
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />

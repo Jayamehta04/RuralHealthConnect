@@ -16,7 +16,9 @@ export const parsePrescription = async (text, token) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Error parsing prescription with AI:', error);
-        throw new Error(error.response?.data?.message || 'Failed to parse prescription. Please try again.');
+        const errMsg = error.response && error.response.data && error.response.data.message 
+            ? error.response.data.message 
+            : error.message;
+        throw new Error(errMsg);
     }
 };

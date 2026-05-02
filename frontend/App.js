@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/context/AuthContext'; 
+import { CallProvider } from './src/context/CallContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import './src/i18n';
 import * as Notifications from 'expo-notifications';
@@ -51,9 +52,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider> 
-        <NavigationContainer>
-          <AppNavigator />
-        </NavigationContainer>
+        <CallProvider>
+          <NavigationContainer>
+            <AppNavigator />
+          </NavigationContainer>
+        </CallProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );

@@ -146,7 +146,8 @@ const getDoctors = async (req, res) => {
         fees: doctor.fees || 0,
         diseaseSpecialty: doctor.diseaseSpecialty || [],
         totalReviews: doctor.totalReviews || 0,
-        recentFeedback: doctor.recentFeedback || []
+        recentFeedback: doctor.recentFeedback || [],
+        profilePicture: doctor.profilePicture || doctor.image || null
       };
     }));
 
@@ -163,7 +164,8 @@ const getDoctors = async (req, res) => {
         fees: doctor.fees,
         diseaseSpecialty: doctor.diseaseSpecialty,
         totalReviews: doctor.totalReviews || 0,
-        recentFeedback: doctor.recentFeedback || []
+        recentFeedback: doctor.recentFeedback || [],
+        profilePicture: doctor.profilePicture || doctor.image || null
       };
     }));
 
