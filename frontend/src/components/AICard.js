@@ -27,7 +27,7 @@ const AICard = ({ onAskPress, onTipsPress }) => {
   return (
     <Animated.View style={[styles.cardContainer, { opacity: opacityValue, transform: [{ scale: scaleValue }] }]}>
       <ImageBackground 
-        source={require('../../assets/images/ai_assistant_card.png')} 
+        source={require('../../assets/images/ai_assistant_card.jpg')} 
         style={styles.imageBackground}
         imageStyle={{ borderRadius: 20 }}
         resizeMode="cover"
