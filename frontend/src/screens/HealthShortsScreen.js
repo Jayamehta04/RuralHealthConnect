@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { BASE_URL } from '../config';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const windowHeight = Dimensions.get('window').height;
 const ITEM_HEIGHT = windowHeight - 110;
@@ -23,6 +25,7 @@ const AUDIO_CACHE_DIR = FileSystem.documentDirectory + 'healthShortsAudio/';
 
 const HealthShortsScreen = () => {
   const { t, i18n } = useTranslation();
+  const { isOnline } = useNetwork();
   const [feed, setFeed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -41,13 +44,26 @@ const HealthShortsScreen = () => {
 
   const loadFeed = async () => {
     try {
+      if (!isOnline) {
+         const cached = await AsyncStorage.getItem('cached_health_shorts');
+         if (cached) {
+           const parsed = JSON.parse(cached);
+           setFeed(parsed);
+           setOfflineReady(true);
+           setLoading(false);
+           return;
+         }
+      }
+
       const response = await axios.get(`${BASE_URL}/api/healthshorts`);
       const items = response.data.map((item) => ({ ...item }));
       setFeed(items);
+      await AsyncStorage.setItem('cached_health_shorts', JSON.stringify(items));
       await prepareOfflineAssets(items);
     } catch (error) {
       console.warn('HealthShorts fetch failed, using local fallback:', error.message);
-      const fallback = getLocalSample();
+      const cached = await AsyncStorage.getItem('cached_health_shorts');
+      const fallback = cached ? JSON.parse(cached) : getLocalSample();
       setFeed(fallback);
       await prepareOfflineAssets(fallback);
     } finally {

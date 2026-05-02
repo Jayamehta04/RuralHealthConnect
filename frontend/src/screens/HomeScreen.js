@@ -24,6 +24,8 @@ import { useIsFocused } from '@react-navigation/native';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import AICard from '../components/AICard';
@@ -42,6 +44,7 @@ const HomeScreen = ({ navigation }) => {
 
   const [currentUser, setCurrentUser] = useState(user);
   const { token, logout, user, unreadCount, setUnreadCount } = useContext(AuthContext);
+  const { isOnline } = useNetwork();
 
   const changeLanguage = (lng) => {
     if (i18n.language !== lng) {
@@ -92,11 +95,26 @@ const HomeScreen = ({ navigation }) => {
       setRefreshing(false);
       return;
     }
+
+    if (!isOnline) {
+      try {
+         const cached = await AsyncStorage.getItem('cached_home_doctors');
+         if (cached) setDoctors(JSON.parse(cached));
+      } catch (e) {
+         console.warn("Failed to load cached doctors", e);
+      } finally {
+         setLoading(false);
+         setRefreshing(false);
+      }
+      return;
+    }
+
     try {
       const response = await axios.get(`${BASE_URL}/api/doctors`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDoctors(response.data);
+      await AsyncStorage.setItem('cached_home_doctors', JSON.stringify(response.data));
     } catch (error) {
       console.error("Fetch Error:", error.message);
       if (error.response && error.response.status === 401) {
@@ -238,10 +256,10 @@ const HomeScreen = ({ navigation }) => {
           />
         </View>
         <View style={styles.docInfoCol}>
-          <Text style={styles.docItemName}>{t('home.doctorPrefix')} {item.name}</Text>
+          <Text style={styles.docItemName} numberOfLines={1}>{t('home.doctorPrefix')} {item.name}</Text>
           <Text style={styles.docItemSpec}>{getTranslatedSpec(normalizeSpec(item.specialization))}</Text>
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#f59e0b" />
+            <Ionicons name="star" size={16} color="#f59e0b" />
             <Text style={styles.docItemExp}> {item.averageRating ? item.averageRating.toFixed(1) : '4.5'} • {item.experience || '10'} {t('home.years')}</Text>
           </View>
           <View style={styles.badgeContainer}>
@@ -254,6 +272,7 @@ const HomeScreen = ({ navigation }) => {
           style={styles.callSmallBtn}
           onPress={() => navigation.navigate('DoctorDetails', { doctorId: item._id, doctor: item })}
         >
+          <Ionicons name="call" size={16} color="#fff" style={{ marginRight: 6 }} />
           <Text style={styles.callSmallBtnText}>{t('home.call')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -304,27 +323,27 @@ const HomeScreen = ({ navigation }) => {
       <Text style={styles.sectionHeader}>{t('home.quickAccess')}</Text>
       <View style={styles.featureGrid}>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('MedicineVault')}>
-          <View style={styles.featureIconWrap}><Ionicons name="medkit" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="medkit" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.vault')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('MedicalRecords')}>
-          <View style={styles.featureIconWrap}><Ionicons name="document-text" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="document-text" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.records')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('MyAppointments')}>
-          <View style={styles.featureIconWrap}><Ionicons name="calendar" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="calendar" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.bookings')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('PrescriptionHistory')}>
-          <View style={styles.featureIconWrap}><Ionicons name="receipt" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="receipt" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.prescriptions')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('DoctorDiscovery')}>
-          <View style={styles.featureIconWrap}><Ionicons name="chatbubbles" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="chatbubbles" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.consultDoctorAction')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.featureItem} onPress={() => navigation.navigate('Pharmacy')}>
-          <View style={styles.featureIconWrap}><Ionicons name="cart" size={22} color="#0f766e" /></View>
+          <View style={styles.featureIconWrap}><Ionicons name="cart" size={26} color="#059669" /></View>
           <Text style={styles.featureItemText}>{t('home.buyMedicineAction')}</Text>
         </TouchableOpacity>
       </View>
@@ -491,8 +510,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   langButtonActive: {
-    backgroundColor: '#0f766e',
-    borderColor: '#0f766e'
+    backgroundColor: '#059669',
+    borderColor: '#059669'
   },
   langButtonText: {
     fontSize: 14,
@@ -528,7 +547,7 @@ const styles = StyleSheet.create({
   actionButton: { flex: 0.48, borderRadius: 18, paddingVertical: 18, paddingHorizontal: 10, justifyContent: 'center', alignItems: 'center', minHeight: 110, elevation: 3 },
   actionText: { color: '#fff', fontSize: 14, fontWeight: '700', textAlign: 'center', marginTop: 10 },
 
-  sectionHeader: { fontSize: 18, fontWeight: '800', color: '#1e293b', marginBottom: 16 },
+  sectionHeader: { fontSize: 20, fontWeight: '800', color: '#1e293b', marginBottom: 16 },
 
   featureGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 },
   featureItem: {
@@ -537,10 +556,10 @@ const styles = StyleSheet.create({
     elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }
   },
   featureIconWrap: {
-    backgroundColor: '#f0fdfa', width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#ecfdf5', width: 50, height: 50, borderRadius: 25,
     justifyContent: 'center', alignItems: 'center', marginBottom: 8
   },
-  featureItemText: { fontSize: 12, color: '#334155', fontWeight: '600', textAlign: 'center' },
+  featureItemText: { fontSize: 13, color: '#334155', fontWeight: '700', textAlign: 'center' },
   awarenessCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 18, padding: 16, marginBottom: 24,
@@ -579,26 +598,27 @@ const styles = StyleSheet.create({
 
   list: { paddingBottom: 40 },
   doctorItemCard: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    marginBottom: 16, marginHorizontal: 20, alignItems: 'center', justifyContent: 'space-between',
-    elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 18,
+    marginBottom: 20, marginHorizontal: 20, alignItems: 'center', justifyContent: 'space-between',
+    elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowOffset: { width: 0, height: 4 }, shadowRadius: 6,
+    borderWidth: 1, borderColor: '#f1f5f9'
   },
   docItemLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  docMiniAvatar: { width: 50, height: 50, borderRadius: 14, backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+  docMiniAvatar: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   docInfoCol: { justifyContent: 'center', flex: 1 },
-  docItemName: { fontSize: 16, fontWeight: 'bold', color: '#115e59' },
-  docItemSpec: { fontSize: 13, color: '#0f766e', marginTop: 2, fontWeight: '600' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  docItemExp: { fontSize: 12, color: '#64748b', marginLeft: 4 },
-  badgeContainer: { marginTop: 6, flexDirection: 'row' },
-  availableBadge: { backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  badgeText: { color: '#166534', fontSize: 10, fontWeight: 'bold' },
+  docItemName: { fontSize: 18, fontWeight: 'bold', color: '#064e3b' },
+  docItemSpec: { fontSize: 14, color: '#059669', marginTop: 3, fontWeight: '700' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  docItemExp: { fontSize: 14, color: '#475569', marginLeft: 4, fontWeight: '500' },
+  badgeContainer: { marginTop: 8, flexDirection: 'row' },
+  availableBadge: { backgroundColor: '#dcfce7', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  badgeText: { color: '#166534', fontSize: 12, fontWeight: 'bold' },
 
   docItemRight: { alignItems: 'flex-end', marginLeft: 10 },
-  callSmallBtn: { backgroundColor: '#0f766e', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, minWidth: 80, alignItems: 'center', marginBottom: 8 },
-  callSmallBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-  reviewsBtn: { backgroundColor: '#f1f5f9', paddingVertical: 6, paddingHorizontal: 16, borderRadius: 10, minWidth: 80, alignItems: 'center' },
-  reviewsBtnText: { color: '#475569', fontWeight: 'bold', fontSize: 12 },
+  callSmallBtn: { backgroundColor: '#059669', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, minWidth: 90, alignItems: 'center', marginBottom: 10, flexDirection: 'row', justifyContent: 'center', elevation: 2 },
+  callSmallBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  reviewsBtn: { backgroundColor: '#f1f5f9', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 12, minWidth: 90, alignItems: 'center' },
+  reviewsBtnText: { color: '#475569', fontWeight: 'bold', fontSize: 13 },
 
   emptyContainer: { alignItems: 'center', marginTop: 20 },
   empty: { color: '#94a3b8', fontSize: 14 }

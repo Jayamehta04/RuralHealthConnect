@@ -1,9 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Animated, Easing, Image } from 'react-native';
+import React, { useEffect, useState, useRef, useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import { CallContext } from '../context/CallContext';
 
-const IncomingCallScreen = ({ callerName, callerImage, isVideo, isOutgoing, onAccept, onReject }) => {
+const IncomingCallScreen = ({ route, navigation }) => {
+  const { callerName, callerImage, isVideo, isOutgoing } = route.params || {};
+  const { acceptCall, rejectCall, endCall } = useContext(CallContext);
+  
   const [sound, setSound] = useState(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0.5)).current;
@@ -55,6 +60,15 @@ const IncomingCallScreen = ({ callerName, callerImage, isVideo, isOutgoing, onAc
     };
   }, [isOutgoing]);
 
+  const handleReject = () => {
+    if (isOutgoing) endCall();
+    else rejectCall();
+  };
+
+  const handleAccept = () => {
+    acceptCall();
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -82,7 +96,7 @@ const IncomingCallScreen = ({ callerName, callerImage, isVideo, isOutgoing, onAc
 
         <View style={styles.actionArea}>
           <View style={styles.btnWrapper}>
-            <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={onReject}>
+            <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={handleReject}>
                <Ionicons name={isOutgoing ? "call" : "close"} size={36} color="#fff" style={isOutgoing ? {transform: [{rotate: '135deg'}]} : {}} />
             </TouchableOpacity>
             <Text style={styles.btnLabel}>{isOutgoing ? "End Call" : "Decline"}</Text>
@@ -90,7 +104,7 @@ const IncomingCallScreen = ({ callerName, callerImage, isVideo, isOutgoing, onAc
           
           {!isOutgoing && (
              <View style={styles.btnWrapper}>
-               <TouchableOpacity style={[styles.btn, styles.acceptBtn]} onPress={onAccept}>
+               <TouchableOpacity style={[styles.btn, styles.acceptBtn]} onPress={handleAccept}>
                   <Ionicons name={isVideo ? "videocam" : "call"} size={36} color="#fff" />
                </TouchableOpacity>
                <Text style={styles.btnLabel}>Accept</Text>
@@ -104,9 +118,8 @@ const IncomingCallScreen = ({ callerName, callerImage, isVideo, isOutgoing, onAc
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     backgroundColor: '#0f172a',
-    zIndex: 9999,
   },
   safeArea: {
     flex: 1,

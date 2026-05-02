@@ -29,6 +29,8 @@ import HealthShortsScreen from '../screens/HealthShortsScreen';
 import HealthAwarenessScreen from '../screens/HealthAwarenessScreen';
 import AIChatScreen from '../screens/AIChatScreen';
 import HealthBlogScreen from '../screens/HealthBlogScreen';
+import AgoraCallScreen from '../screens/AgoraCallScreen';
+import IncomingCallScreen from '../screens/IncomingCallScreen';
 
 const Stack = createStackNavigator();
 
@@ -51,6 +53,8 @@ const AppNavigator = () => {
             <Stack.Screen name="PrescriptionHistory" component={PrescriptionHistoryScreen} options={{ title: t('navigation.prescriptions') }} />
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: t('navigation.notifications') }} />
             <Stack.Screen name="AIChat" component={AIChatScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="IncomingCall" component={IncomingCallScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="AgoraCall" component={AgoraCallScreen} options={{ headerShown: false }} />
           </>
         ) : (
           <>
@@ -75,6 +79,8 @@ const AppNavigator = () => {
             <Stack.Screen name="RateDoctor" component={RateDoctorScreen} options={{ title: t('navigation.rateDoctor') }} />
             <Stack.Screen name="DoctorReviews" component={DoctorReviewsScreen} options={{ title: t('navigation.doctorReviews') }} />
             <Stack.Screen name="AIChat" component={AIChatScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="IncomingCall" component={IncomingCallScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="AgoraCall" component={AgoraCallScreen} options={{ headerShown: false }} />
           </>
         )
       ) : (

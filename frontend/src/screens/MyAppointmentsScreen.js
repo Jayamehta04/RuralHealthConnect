@@ -6,6 +6,8 @@ import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MyAppointmentsScreen = () => {
   const { t, i18n } = useTranslation();
@@ -18,6 +20,7 @@ const MyAppointmentsScreen = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const { token, user } = useContext(AuthContext);
+  const { isOnline } = useNetwork();
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -34,13 +37,60 @@ const MyAppointmentsScreen = () => {
     return unsubscribe;
   }, [navigation, token]);
 
+  const syncOfflineBookings = async () => {
+    try {
+      const offlineBookingsStr = await AsyncStorage.getItem('offline_bookings');
+      if (offlineBookingsStr) {
+        const queue = JSON.parse(offlineBookingsStr);
+        for (let b of queue) {
+          try {
+            await axios.post(`${BASE_URL}/api/appointments/book`, {
+              doctorId: b.doctorId, date: b.date, time: b.time, reason: b.reason
+            }, { headers: { Authorization: `Bearer ${token}` } });
+          } catch (e) {
+             console.log("Failed to sync booking", e);
+          }
+        }
+        await AsyncStorage.removeItem('offline_bookings');
+      }
+    } catch (e) {
+      console.log("Error syncing bookings", e);
+    }
+  };
+
   const fetchMyAppointments = async () => {
     if (!token) return;
+
+    if (isOnline) {
+      await syncOfflineBookings();
+    }
+
     try {
+      if (!isOnline) {
+         const cached = await AsyncStorage.getItem('cached_appointments');
+         let apps = cached ? JSON.parse(cached) : [];
+         
+         const offlineQueueStr = await AsyncStorage.getItem('offline_bookings');
+         if (offlineQueueStr) {
+            const queue = JSON.parse(offlineQueueStr).map(q => ({
+              ...q,
+              doctor: { name: q.doctorName || 'Doctor' },
+              status: 'Queued (Offline)'
+            }));
+            apps = [...queue, ...apps];
+         }
+         
+         setAppointments(apps);
+         setLoading(false);
+         setRefreshing(false);
+         return;
+      }
+
       const response = await axios.get(`${BASE_URL}/api/appointments/my-appointments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
+      await AsyncStorage.setItem('cached_appointments', JSON.stringify(response.data));
     } catch (error) {
       console.error("Fetch Error:", error);
     } finally {
@@ -55,6 +105,10 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleCancel = async (appointmentId) => {
+    if (!isOnline) {
+      Alert.alert(t('common.error'), "Cannot cancel appointment while offline.");
+      return;
+    }
     Alert.alert(
       t('appointments.cancelAppointment'),
       t('appointments.cancelConfirm'),
@@ -80,6 +134,10 @@ const MyAppointmentsScreen = () => {
   };
 
   const handleReschedule = (appointment) => {
+    if (!isOnline) {
+      Alert.alert(t('common.error'), "Cannot reschedule appointment while offline.");
+      return;
+    }
     setSelectedAppointment(appointment);
     setSelectedDate(new Date(appointment.date).toISOString().split('T')[0]);
     setSelectedTime(appointment.time);

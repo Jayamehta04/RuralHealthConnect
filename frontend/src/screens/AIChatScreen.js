@@ -5,6 +5,7 @@ import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useNetwork } from '../context/NetworkContext';
 
 const AIChatScreen = ({ navigation }) => {
   const [messages, setMessages] = useState([]);
@@ -13,6 +14,7 @@ const AIChatScreen = ({ navigation }) => {
   const flatListRef = useRef(null);
   const { token } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
+  const { isOnline } = useNetwork();
 
   useEffect(() => {
     // Initial welcome message
@@ -46,6 +48,39 @@ const AIChatScreen = ({ navigation }) => {
     setMessages((prev) => [...prev, userMessage]);
     setInputMsg("");
     setLoading(true);
+
+    if (!isOnline) {
+      const lower = inputMsg.toLowerCase();
+      let replyText = {
+         possible_issue: "General Assessment (Offline)",
+         severity: "MILD",
+         advice: i18n.language === 'hi' ? "आराम करें और तरल पदार्थ पिएं।" : "Rest and drink plenty of fluids. This is an offline automated response.",
+         precautions: [i18n.language === 'hi' ? "हाइड्रेटेड रहें" : "Stay hydrated", i18n.language === 'hi' ? "आराम करें" : "Rest"],
+         next_step: i18n.language === 'hi' ? "लक्षण बने रहने पर डॉक्टर से मिलें।" : "Consult a doctor if symptoms persist."
+      };
+      if (lower.includes("fever") || lower.includes("बुखार") || lower.includes("hot")) {
+         replyText.possible_issue = i18n.language === 'hi' ? "बुखार" : "Fever";
+         replyText.advice = i18n.language === 'hi' ? "आराम करें। तापमान पर नजर रखें।" : "Take rest. Monitor temperature.";
+      } else if (lower.includes("cold") || lower.includes("सर्दी") || lower.includes("cough")) {
+         replyText.possible_issue = i18n.language === 'hi' ? "सर्दी/जुकाम" : "Common Cold";
+         replyText.advice = i18n.language === 'hi' ? "गर्म पानी पिएं। आराम करें।" : "Drink warm water. Rest well.";
+      } else if (lower.includes("pain") || lower.includes("दर्द") || lower.includes("ache")) {
+         replyText.possible_issue = i18n.language === 'hi' ? "दर्द" : "Pain / Aches";
+         replyText.advice = i18n.language === 'hi' ? "प्रभावित हिस्से को आराम दें।" : "Avoid heavy lifting. Rest the affected area.";
+      }
+
+      const aiReply = {
+        _id: Math.random().toString(),
+        text: replyText,
+        isSender: false,
+        timestamp: new Date().toISOString(),
+      };
+      setTimeout(() => {
+        setMessages((prev) => [...prev, aiReply]);
+        setLoading(false);
+      }, 1000);
+      return;
+    }
 
     try {
       const lang = i18n.language || 'en';

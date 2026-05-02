@@ -1,43 +1,64 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { useNavigation, StackActions } from '@react-navigation/native';
 import { AuthContext } from './AuthContext';
-import AgoraCallScreen from '../screens/AgoraCallScreen';
-import IncomingCallScreen from '../screens/IncomingCallScreen';
 
 export const CallContext = createContext();
 
 export const CallProvider = ({ children }) => {
   const { user, socket } = useContext(AuthContext);
+  const navigation = useNavigation();
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [activeCallData, setActiveCallData] = useState(null);
 
   useEffect(() => {
     if (!socket || !user) return;
 
-    // Note: register-user is now robustly handled inside AuthContext on socket 'connect'
-
     socket.on('incoming-call', (data) => {
       console.log("✅ Incoming call received:", data);
-      setIncomingCallData({
+      const callData = {
         patientId: data.patientId,
         patientName: data.patientName,
         patientImage: data.patientImage,
         channelName: data.channelName,
         isVideo: data.isVideo
+      };
+      setIncomingCallData(callData);
+      navigation.navigate('IncomingCall', {
+        callerName: data.patientName,
+        callerImage: data.patientImage,
+        isVideo: data.isVideo,
+        isOutgoing: false
       });
     });
 
     socket.on('call-accepted', () => {
-       setActiveCallData(prev => ({ ...prev, accepted: true }));
+       setActiveCallData(prev => {
+         if (prev) {
+            navigation.dispatch(StackActions.replace('AgoraCall', {
+               channelName: prev.channelName,
+               peerName: prev.peerName,
+               isVideo: prev.isVideo
+            }));
+            return { ...prev, accepted: true };
+         }
+         return prev;
+       });
     });
 
     socket.on('call-rejected', () => {
       setActiveCallData(null);
       setIncomingCallData(null);
+      navigation.goBack();
     });
 
     socket.on('call-ended', () => {
       setActiveCallData(null);
       setIncomingCallData(null);
+      // Wait to go back, the screen itself should handle goBack if it receives this, or we can just pop to top
+      if (navigation.canGoBack()) {
+         navigation.goBack();
+      }
     });
 
     return () => {
@@ -46,7 +67,7 @@ export const CallProvider = ({ children }) => {
       socket.off('call-rejected');
       socket.off('call-ended');
     };
-  }, [socket, user]);
+  }, [socket, user, navigation]);
 
   const startCall = (partnerId, partnerName, isVideo, partnerImage) => {
     const channelName = `call_${Date.now()}`;
@@ -70,6 +91,13 @@ export const CallProvider = ({ children }) => {
       channelName,
       isVideo
     });
+    
+    navigation.navigate('IncomingCall', {
+      callerName: partnerName,
+      callerImage: partnerImage,
+      isVideo: isVideo,
+      isOutgoing: true
+    });
   };
 
   const acceptCall = () => {
@@ -87,7 +115,16 @@ export const CallProvider = ({ children }) => {
       accepted: true
     });
 
+    const channel = incomingCallData.channelName;
+    const peer = incomingCallData.patientName || incomingCallData.callerName;
+    const isVid = incomingCallData.isVideo;
+    
     setIncomingCallData(null);
+    navigation.dispatch(StackActions.replace('AgoraCall', {
+       channelName: channel,
+       peerName: peer,
+       isVideo: isVid
+    }));
   };
 
   const rejectCall = () => {
@@ -95,6 +132,7 @@ export const CallProvider = ({ children }) => {
       socket.emit('reject-call', { to: incomingCallData.patientId || incomingCallData.from });
     }
     setIncomingCallData(null);
+    if (navigation.canGoBack()) navigation.goBack();
   };
 
   const endCall = () => {
@@ -105,36 +143,12 @@ export const CallProvider = ({ children }) => {
      }
      setActiveCallData(null);
      setIncomingCallData(null);
+     if (navigation.canGoBack()) navigation.goBack();
   };
 
   return (
-    <CallContext.Provider value={{ startCall, endCall }}>
+    <CallContext.Provider value={{ startCall, endCall, acceptCall, rejectCall }}>
       {children}
-      {incomingCallData && !activeCallData && (
-         <IncomingCallScreen 
-            callerName={incomingCallData.patientName || incomingCallData.callerName} 
-            callerImage={incomingCallData.patientImage}
-            isVideo={incomingCallData.isVideo}
-            onAccept={acceptCall}
-            onReject={rejectCall}
-         />
-      )}
-      {activeCallData && (!activeCallData.isCaller || activeCallData.accepted ? (
-        <AgoraCallScreen 
-            channelName={activeCallData.channelName} 
-            peerName={activeCallData.peerName}
-            isVideo={activeCallData.isVideo}
-            onEndCall={endCall} 
-        />
-      ) : (
-         <IncomingCallScreen 
-             callerName={activeCallData.peerName}
-             callerImage={activeCallData.peerImage}
-             isVideo={activeCallData.isVideo}
-             isOutgoing
-             onReject={endCall}
-         />
-      ))}
     </CallContext.Provider>
   );
 };

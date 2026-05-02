@@ -6,6 +6,8 @@ import axios from 'axios';
 import { BASE_URL } from '../config';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DoctorDiscoveryScreen = () => {
   const { t } = useTranslation();
@@ -18,11 +20,12 @@ const DoctorDiscoveryScreen = () => {
   const [maxExperience, setMaxExperience] = useState('');
   const [disease, setDisease] = useState('');
   const { token } = useContext(AuthContext);
+  const { isOnline } = useNetwork();
   const navigation = useNavigation();
 
   useEffect(() => {
     fetchDoctors();
-  }, [token, search, specialization, location, minExperience, maxExperience, disease]);
+  }, [token, search, specialization, location, minExperience, maxExperience, disease, isOnline]);
 
   const fetchDoctors = async () => {
     if (!token) {
@@ -32,6 +35,20 @@ const DoctorDiscoveryScreen = () => {
     }
 
     try {
+      if (!isOnline) {
+        const cached = await AsyncStorage.getItem('cached_doctors');
+        if (cached) {
+          let data = JSON.parse(cached);
+          // Simple offline filtering
+          if (search) data = data.filter(d => d.name.toLowerCase().includes(search.toLowerCase()));
+          if (specialization) data = data.filter(d => d.specialization?.toLowerCase().includes(specialization.toLowerCase()));
+          if (location) data = data.filter(d => d.location?.toLowerCase().includes(location.toLowerCase()));
+          setDoctors(data);
+        }
+        setLoading(false);
+        return;
+      }
+
       const params = new URLSearchParams();
       if (search) params.append('name', search);
       if (specialization) params.append('specialization', specialization);
@@ -46,9 +63,16 @@ const DoctorDiscoveryScreen = () => {
       });
 
       setDoctors(response.data);
+      // Only cache unfiltered results to have full list offline
+      if (!search && !specialization && !location && !minExperience && !maxExperience && !disease) {
+        await AsyncStorage.setItem('cached_doctors', JSON.stringify(response.data));
+      }
       setLoading(false);
     } catch (error) {
       console.error("Error fetching doctors:", error);
+      // Fallback to cache on error
+      const cached = await AsyncStorage.getItem('cached_doctors');
+      if (cached) setDoctors(JSON.parse(cached));
       setLoading(false);
     }
   };

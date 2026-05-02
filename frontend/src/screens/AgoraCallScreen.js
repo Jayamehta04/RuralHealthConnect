@@ -1,31 +1,45 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
-import { View, ActivityIndicator, Alert, StyleSheet, SafeAreaView, TouchableOpacity, Text, Platform, PermissionsAndroid } from 'react-native';
+import { View, ActivityIndicator, Alert, StyleSheet, TouchableOpacity, Text, Platform, PermissionsAndroid } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import createAgoraRtcEngine, {
   ChannelProfileType,
   ClientRoleType,
   RtcSurfaceView,
+  RenderModeType,
 } from 'react-native-agora';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
+import { CallContext } from '../context/CallContext';
 import { Ionicons } from '@expo/vector-icons';
 
-const AgoraCallScreen = ({ channelName, peerName, isVideo, onEndCall }) => {
+const AgoraCallScreen = ({ route, navigation }) => {
+  const { channelName, peerName, isVideo } = route.params || {};
+  const { endCall } = useContext(CallContext);
   const { token, user } = useContext(AuthContext);
   const engine = useRef(null);
   
   const [agoraToken, setAgoraToken] = useState(null);
   const [appId, setAppId] = useState(null);
   const [isJoined, setIsJoined] = useState(false);
-  const [remoteUid, setRemoteUid] = useState(0);
+  
+  const [remoteUid, setRemoteUidState] = useState(0);
+  const remoteUidRef = useRef(0);
+  
   const [loading, setLoading] = useState(true);
   const [micMuted, setMicMuted] = useState(false);
   const [camMuted, setCamMuted] = useState(!isVideo);
   const [timer, setTimer] = useState(0);
+  const [hasPermissions, setHasPermissions] = useState(false);
   
   const uid = useRef(Math.floor(Math.random() * 10000) + 1).current;
 
-  // Setup permissions
+  const setRemoteUid = (id) => {
+    remoteUidRef.current = id;
+    setRemoteUidState(id);
+  };
+
+  // 1. Setup permissions first
   useEffect(() => {
     const requestPermissions = async () => {
       if (Platform.OS === 'android') {
@@ -39,90 +53,119 @@ const AgoraCallScreen = ({ channelName, peerName, isVideo, onEndCall }) => {
             (isVideo && granted['android.permission.CAMERA'] !== PermissionsAndroid.RESULTS.GRANTED)
           ) {
             Alert.alert("Permission Required", "Camera and Microphone are required for calls.");
-            onEndCall();
+            endCall();
+            return;
           }
         } catch (err) {
           console.warn(err);
+          endCall();
+          return;
         }
       }
+      setHasPermissions(true);
     };
     requestPermissions();
   }, [isVideo]);
 
-  // Fetch token
+  // 2. Fetch token only after permissions are granted
   useEffect(() => {
+    if (!hasPermissions) return;
+
+    let isMounted = true;
     const fetchToken = async () => {
       try {
         const res = await axios.get(`${BASE_URL}/api/agora/token?channelName=${channelName}&uid=${uid}`);
-        setAgoraToken(res.data.token);
-        setAppId(res.data.appId);
+        if (isMounted) {
+          setAgoraToken(res.data.token);
+          setAppId(res.data.appId);
+        }
       } catch (e) {
         console.warn("Failed to fetch Agora token.", e);
-        Alert.alert("Error", "Could not connect to Agora server.");
-        onEndCall();
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+           Alert.alert("Error", "Could not connect to Agora server.");
+           endCall();
+        }
       }
     };
     fetchToken();
-  }, [channelName, uid]);
+    return () => { isMounted = false; };
+  }, [hasPermissions, channelName, uid]);
 
-  // Initialize engine
+  // 3. Initialize engine only after token is fetched
   useEffect(() => {
-    if (appId && agoraToken) {
-      initEngine();
-    }
+    if (!appId || !agoraToken) return;
+
+    let eventHandler;
+
+    const initEngine = async () => {
+      try {
+        engine.current = createAgoraRtcEngine();
+        engine.current.initialize({ appId: appId });
+        
+        eventHandler = {
+          onJoinChannelSuccess: (_connection, elapsed) => {
+            setIsJoined(true);
+            setLoading(false);
+          },
+          onUserJoined: (_connection, joinedUid, elapsed) => {
+            setRemoteUid(joinedUid);
+          },
+          onUserOffline: (_connection, offlineUid, reason) => {
+            // Only end call if the person leaving is our actual remote partner
+            if (remoteUidRef.current === offlineUid) {
+              setRemoteUid(0);
+              endCall(); 
+            }
+          },
+          onError: (err, msg) => {
+            console.log("Agora error:", err, msg);
+          }
+        };
+
+        engine.current.registerEventHandler(eventHandler);
+        engine.current.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
+        
+        if (isVideo) {
+          engine.current.enableVideo();
+          engine.current.startPreview();
+        } else {
+          engine.current.enableAudio();
+        }
+
+        engine.current.joinChannel(agoraToken, channelName, uid, {
+          clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+          publishMicrophoneTrack: true,
+          publishCameraTrack: isVideo,
+        });
+
+      } catch (e) {
+        console.log("Init Engine Error:", e);
+        Alert.alert("Error", "Failed to start call");
+        endCall();
+      }
+    };
+
+    initEngine();
+
     return () => {
       if (engine.current) {
-        engine.current.leaveChannel();
-        engine.current.release();
+        try {
+          if (eventHandler) {
+             engine.current.unregisterEventHandler(eventHandler);
+          }
+          engine.current.leaveChannel();
+          setTimeout(() => {
+            if (engine.current) {
+              engine.current.release();
+              engine.current = null;
+            }
+          }, 100);
+        } catch (e) {
+          console.log("Cleanup Error:", e);
+        }
       }
     };
   }, [appId, agoraToken]);
-
-  const initEngine = async () => {
-    try {
-      engine.current = createAgoraRtcEngine();
-      engine.current.initialize({ appId: appId });
-      
-      // Setup event handlers
-      engine.current.registerEventHandler({
-        onJoinChannelSuccess: (_connection, elapsed) => {
-          setIsJoined(true);
-        },
-        onUserJoined: (_connection, remoteUid, elapsed) => {
-          setRemoteUid(remoteUid);
-        },
-        onUserOffline: (_connection, remoteUid, reason) => {
-          setRemoteUid(0);
-          onEndCall(); // End call when partner leaves
-        },
-        onError: (err, msg) => {
-          console.log("Agora error:", err, msg);
-        }
-      });
-
-      engine.current.setChannelProfile(ChannelProfileType.ChannelProfileCommunication);
-      
-      if (isVideo) {
-        engine.current.enableVideo();
-        engine.current.startPreview();
-      } else {
-        engine.current.enableAudio();
-      }
-
-      engine.current.joinChannel(agoraToken, channelName, uid, {
-        clientRoleType: ClientRoleType.ClientRoleBroadcaster,
-        publishMicrophoneTrack: true,
-        publishCameraTrack: isVideo,
-      });
-
-    } catch (e) {
-      console.log(e);
-      Alert.alert("Error", "Failed to start call");
-      onEndCall();
-    }
-  };
 
   // Timer
   useEffect(() => {
@@ -156,19 +199,17 @@ const AgoraCallScreen = ({ channelName, peerName, isVideo, onEndCall }) => {
     return (
       <View style={[styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Connecting to server...</Text>
+        <Text style={styles.loadingText}>Connecting to secure call...</Text>
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Video Container */}
       <View style={styles.videoContainer}>
-        {/* Remote Video */}
         {remoteUid !== 0 && isVideo ? (
           <RtcSurfaceView
-            canvas={{ uid: remoteUid }}
+            canvas={{ uid: remoteUid, renderMode: RenderModeType.RenderModeHidden }}
             style={styles.remoteVideo}
           />
         ) : (
@@ -184,22 +225,20 @@ const AgoraCallScreen = ({ channelName, peerName, isVideo, onEndCall }) => {
           </View>
         )}
 
-        {/* Local Video */}
         {isJoined && isVideo && !camMuted && (
           <RtcSurfaceView
-            canvas={{ uid: 0 }}
+            canvas={{ uid: 0, renderMode: RenderModeType.RenderModeHidden }}
             style={styles.localVideo}
+            zOrderMediaOverlay={true}
           />
         )}
       </View>
 
-      {/* Header overlay */}
       <View style={styles.headerOverlay} pointerEvents="none">
         <Text style={styles.topPeerName}>{peerName || 'Unknown Contact'}</Text>
         <Text style={styles.timer}>{formatTime(timer)}</Text>
       </View>
 
-      {/* Controls */}
       <View style={styles.controls}>
         <TouchableOpacity 
           style={[styles.btn, micMuted && styles.btnOff]} 
@@ -217,7 +256,7 @@ const AgoraCallScreen = ({ channelName, peerName, isVideo, onEndCall }) => {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={[styles.btn, styles.btnRed]} onPress={onEndCall}>
+        <TouchableOpacity style={[styles.btn, styles.btnRed]} onPress={endCall}>
           <Ionicons name="call" size={28} color="#fff" style={{ transform: [{ rotate: '135deg' }] }} />
         </TouchableOpacity>
       </View>

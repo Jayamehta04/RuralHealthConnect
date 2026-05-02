@@ -5,6 +5,8 @@ import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import { CallContext } from '../context/CallContext';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useHeaderHeight } from '@react-navigation/elements';
 
@@ -12,6 +14,7 @@ const ChatConversationScreen = ({ route }) => {
   const { peerId, peerName, peerImage } = route.params;
   const { token, user } = useContext(AuthContext);
   const { startCall } = useContext(CallContext);
+  const { isOnline } = useNetwork();
 
   
   const [messages, setMessages] = useState([]);
@@ -55,19 +58,52 @@ const ChatConversationScreen = ({ route }) => {
 
   const fetchConversation = async () => {
     if (!token || !peerId) return;
+    
+    if (!isOnline) {
+      const cached = await AsyncStorage.getItem(`chat_${peerId}`);
+      if (cached) setMessages(JSON.parse(cached));
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await axios.get(`${BASE_URL}/api/chat/conversation`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { withUserId: peerId }
       });
-      // Reverse array so newest is at index 0 (bottom of inverted list)
-      setMessages((response.data || []).reverse());
+      const data = (response.data || []).reverse();
+      setMessages(data);
+      await AsyncStorage.setItem(`chat_${peerId}`, JSON.stringify(data));
     } catch (error) {
       console.error('Chat fetch failed', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const syncOfflineMessages = async () => {
+    try {
+      const offlineQueue = await AsyncStorage.getItem(`offline_queue_${peerId}`);
+      if (offlineQueue) {
+        const messages = JSON.parse(offlineQueue);
+        for (let msg of messages) {
+           await axios.post(`${BASE_URL}/api/chat/send`, msg, {
+             headers: { Authorization: `Bearer ${token}` }
+           });
+        }
+        await AsyncStorage.removeItem(`offline_queue_${peerId}`);
+        fetchConversation(); // refresh
+      }
+    } catch (e) {
+      console.error("Failed to sync offline messages", e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOnline) {
+      syncOfflineMessages();
+    }
+  }, [isOnline]);
 
   const handleQuickReply = (reply) => {
     const payloadText = language === 'en' ? reply.text_en : reply.text_hi;
@@ -105,16 +141,35 @@ const ChatConversationScreen = ({ route }) => {
     let simulated_en = textEn || textToSend.trim();
     let simulated_hi = textHi || mockTranslations[textToSend.trim()] || textToSend.trim();
 
-    try {
-      const payload = { 
-        receiverId: peerId, 
-        text: textToSend.trim(),
-        text_en: simulated_en,
-        text_hi: simulated_hi,
-        type: 'text',
-        senderImage: user?.profilePicture || user?.image || null
-      };
+    const payload = { 
+      receiverId: peerId, 
+      text: textToSend.trim(),
+      text_en: simulated_en,
+      text_hi: simulated_hi,
+      type: 'text',
+      senderImage: user?.profilePicture || user?.image || null
+    };
+
+    if (!isOnline) {
+      if (!overrideText) setText('');
+      const offlineMsg = { ...payload, _id: Date.now().toString(), sender: user?.id || user?._id, createdAt: new Date().toISOString(), isOffline: true };
       
+      setMessages(prev => {
+        const newMessages = [offlineMsg, ...prev];
+        AsyncStorage.setItem(`chat_${peerId}`, JSON.stringify(newMessages));
+        return newMessages;
+      });
+      
+      const offlineQueue = await AsyncStorage.getItem(`offline_queue_${peerId}`);
+      const queue = offlineQueue ? JSON.parse(offlineQueue) : [];
+      queue.push(payload);
+      await AsyncStorage.setItem(`offline_queue_${peerId}`, JSON.stringify(queue));
+      
+      setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
+      return;
+    }
+
+    try {
       const res = await axios.post(`${BASE_URL}/api/chat/send`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -128,7 +183,11 @@ const ChatConversationScreen = ({ route }) => {
       if (!deliveredMsg.text_hi) deliveredMsg.text_hi = payload.text_hi;
       deliveredMsg.type = payload.type || 'text';
       
-      setMessages(prev => [deliveredMsg, ...prev]);
+      setMessages(prev => {
+        const newMessages = [deliveredMsg, ...prev];
+        AsyncStorage.setItem(`chat_${peerId}`, JSON.stringify(newMessages));
+        return newMessages;
+      });
       setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true }), 100);
     } catch (error) {
       console.error('Send message failed', error);

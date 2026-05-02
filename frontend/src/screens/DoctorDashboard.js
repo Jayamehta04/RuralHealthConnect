@@ -591,14 +591,14 @@ const styles = StyleSheet.create({
     borderRightColor: '#f1f5f9'
   },
   analyticsValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '800',
-    color: '#1e293b',
+    color: '#0f172a',
     marginBottom: 4
   },
   analyticsLabel: {
-    fontSize: 11,
-    color: '#64748b',
+    fontSize: 12,
+    color: '#475569',
     fontWeight: '700',
     textAlign: 'center',
     textTransform: 'uppercase',
@@ -609,14 +609,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     marginHorizontal: 16, 
     marginTop: 15, 
-    backgroundColor: '#f1f5f9', 
+    backgroundColor: '#e2e8f0', 
     borderRadius: 14, 
     padding: 4 
   },
-  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  activeTab: { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 3 },
-  tabText: { fontWeight: '600', color: '#64748b', fontSize: 14 },
-  activeTabText: { color: '#3b82f6', fontWeight: '800' },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 10 },
+  activeTab: { backgroundColor: '#fff', elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3 },
+  tabText: { fontWeight: '700', color: '#64748b', fontSize: 15 },
+  activeTabText: { color: '#2563eb', fontWeight: '800' },
   
   subTabContainer: { 
     flexDirection: 'row', 
@@ -670,8 +670,8 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   
-  patientName: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
-  timeText: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  patientName: { fontSize: 18, fontWeight: 'bold', color: '#0f172a', marginBottom: 4 },
+  timeText: { fontSize: 14, color: '#475569', fontWeight: '600' },
   
   reasonBox: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 12, marginTop: 16 },
   reasonLabel: { fontSize: 12, color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 },
@@ -682,10 +682,10 @@ const styles = StyleSheet.create({
   emergencyTitle: { color: '#ef4444', fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
   ambulanceTitle: { color: '#f59e0b', fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
   
-  buttonGrid: { flexDirection: 'row', marginTop: 16, gap: 10 },
-  actionBtn: { paddingVertical: 12, borderRadius: 14, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-  btnIcon: { marginRight: 6 },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  buttonGrid: { flexDirection: 'row', marginTop: 18, gap: 12 },
+  actionBtn: { paddingVertical: 14, borderRadius: 14, flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 3, elevation: 2 },
+  btnIcon: { marginRight: 8 },
+  btnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   
   mapBtn: { backgroundColor: '#334155', padding: 12, borderRadius: 12, marginTop: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },

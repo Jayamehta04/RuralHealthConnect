@@ -6,11 +6,14 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
+import { useNetwork } from '../context/NetworkContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BookingScreen = ({ route, navigation }) => {
   const { t } = useTranslation();
   const { doctorId, doctorName } = route.params;
   const { token } = useContext(AuthContext);
+  const { isOnline } = useNetwork();
   
   const [date, setDate] = useState('');
   const [dateObj, setDateObj] = useState(new Date());
@@ -50,6 +53,23 @@ const BookingScreen = ({ route, navigation }) => {
       return;
     }
     
+    if (!isOnline) {
+      try {
+        const payload = { doctorId, doctorName, date, time, reason, _id: Date.now().toString(), status: 'pending' };
+        const offlineBookings = await AsyncStorage.getItem('offline_bookings');
+        const queue = offlineBookings ? JSON.parse(offlineBookings) : [];
+        queue.push(payload);
+        await AsyncStorage.setItem('offline_bookings', JSON.stringify(queue));
+        
+        Alert.alert(t('common.success') || "Queued", "You are offline. Your appointment request has been queued and will be synced when you have internet.");
+        navigation.navigate('MyAppointments');
+        return;
+      } catch (err) {
+        Alert.alert(t('common.error'), "Failed to queue booking.");
+        return;
+      }
+    }
+
     try {
       await axios.post(`${BASE_URL}/api/appointments/book`, {
         doctorId,
@@ -77,6 +97,14 @@ const BookingScreen = ({ route, navigation }) => {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(date)) {
       setSlotMessage(t('booking.slotDateFormat'));
+      return;
+    }
+
+    if (!isOnline) {
+      // Simulate slots for offline use
+      const mockSlots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
+      setSlots(mockSlots);
+      setSlotMessage("Offline mode: showing standard slots. These will be requested when online.");
       return;
     }
 

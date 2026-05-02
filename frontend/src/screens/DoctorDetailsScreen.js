@@ -2,11 +2,21 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CallContext } from '../context/CallContext';
+import { useNetwork } from '../context/NetworkContext';
 
 
 const DoctorDetailsScreen = ({ route, navigation }) => {
   const { doctorId, doctor } = route.params;
   const { startCall } = useContext(CallContext);
+  const { isOnline } = useNetwork();
+
+  const handleCall = (isVideo) => {
+    if (!isOnline) {
+      alert("Internet required for calling");
+      return;
+    }
+    startCall(doctor?._id || doctorId, doctor?.name || 'Doctor', isVideo, doctor?.profilePicture || doctor?.image);
+  };
 
 
   return (
@@ -34,14 +44,14 @@ const DoctorDetailsScreen = ({ route, navigation }) => {
                     <Ionicons name="mail" size={18} color="#0284c7" />
                 </TouchableOpacity>
                 <TouchableOpacity 
-                    style={[styles.actionCircle, {backgroundColor: '#fce7f3'}]}
-                    onPress={() => startCall(doctor?._id || doctorId, doctor?.name || 'Doctor', false, doctor?.profilePicture || doctor?.image)}
+                    style={[styles.actionCircle, {backgroundColor: !isOnline ? '#cbd5e1' : '#fce7f3'}]}
+                    onPress={() => handleCall(false)}
                 >
-                    <Ionicons name="call" size={18} color="#db2777" />
+                    <Ionicons name="call" size={18} color={!isOnline ? "#94a3b8" : "#db2777"} />
                 </TouchableOpacity>
                 <TouchableOpacity 
-                    style={[styles.actionCircle, {backgroundColor: '#f1f5f9'}]}
-                    onPress={() => startCall(doctor?._id || doctorId, doctor?.name || 'Doctor', true, doctor?.profilePicture || doctor?.image)}
+                    style={[styles.actionCircle, {backgroundColor: !isOnline ? '#cbd5e1' : '#f1f5f9'}]}
+                    onPress={() => handleCall(true)}
                 >
                     <Ionicons name="videocam" size={18} color="#94a3b8" />
                 </TouchableOpacity>
