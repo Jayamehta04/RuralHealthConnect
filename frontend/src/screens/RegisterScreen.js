@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL } from '../config';
 
 const RegisterScreen = ({ navigation }) => {
@@ -14,6 +15,7 @@ const RegisterScreen = ({ navigation }) => {
     specialization: '', // Only for doctors
     experience: ''      // Only for doctors
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
     // 1. Validation check
@@ -40,26 +42,37 @@ const RegisterScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>{t('auth.register')}</Text>
       
+      <Text style={styles.inputLabel}>Full Name</Text>
       <TextInput 
         style={styles.input} 
-        placeholder={t('auth.fullName')} 
+        placeholder="Enter your full name" 
+        placeholderTextColor="#888"
         onChangeText={(val) => setFormData({...formData, name: val})} 
       />
       
+      <Text style={styles.inputLabel}>Email Address</Text>
       <TextInput 
         style={styles.input} 
-        placeholder={t('auth.email')} 
+        placeholder="Enter your email" 
+        placeholderTextColor="#888"
         autoCapitalize="none" 
         keyboardType="email-address"
         onChangeText={(val) => setFormData({...formData, email: val})} 
       />
       
-      <TextInput 
-        style={styles.input} 
-        placeholder={t('auth.password')} 
-        secureTextEntry 
-        onChangeText={(val) => setFormData({...formData, password: val})} 
-      />
+      <Text style={styles.inputLabel}>Password</Text>
+      <View style={styles.passwordContainer}>
+        <TextInput 
+          style={styles.passwordInput} 
+          placeholder="********" 
+          placeholderTextColor="#888"
+          secureTextEntry={!showPassword} 
+          onChangeText={(val) => setFormData({...formData, password: val})} 
+        />
+        <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons name={showPassword ? "eye-off" : "eye"} size={24} color="#888" />
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.label}>{t('auth.registerAs')}</Text>
       <View style={styles.roleGroup}>
@@ -81,14 +94,18 @@ const RegisterScreen = ({ navigation }) => {
       {/* Show extra fields ONLY if registering as a doctor */}
       {formData.role === 'doctor' && (
         <>
+          <Text style={styles.inputLabel}>Specialization</Text>
           <TextInput 
             style={styles.input} 
-            placeholder={t('auth.specializationPlaceholder')} 
+            placeholder="Enter your specialization" 
+            placeholderTextColor="#888"
             onChangeText={(val) => setFormData({...formData, specialization: val})} 
           />
+          <Text style={styles.inputLabel}>Experience (Years)</Text>
           <TextInput 
             style={styles.input} 
-            placeholder={t('auth.experiencePlaceholder')} 
+            placeholder="Enter years of experience" 
+            placeholderTextColor="#888"
             keyboardType="numeric" 
             onChangeText={(val) => setFormData({...formData, experience: val})} 
           />
@@ -109,7 +126,11 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: '#fff', flexGrow: 1, justifyContent: 'center' },
   header: { fontSize: 28, fontWeight: 'bold', marginBottom: 30, color: '#2c3e50', textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 10, marginBottom: 15 },
+  inputLabel: { fontSize: 14, fontWeight: '600', color: '#2c3e50', marginBottom: 5, marginLeft: 2 },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 10, marginBottom: 15, color: '#000' },
+  passwordContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 10, marginBottom: 15, backgroundColor: '#fff' },
+  passwordInput: { flex: 1, padding: 15, color: '#000' },
+  eyeIcon: { padding: 15 },
   label: { fontSize: 16, marginBottom: 10, fontWeight: '600' },
   roleGroup: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   roleBtn: { flex: 0.48, padding: 12, borderWidth: 1, borderColor: '#3498db', borderRadius: 10, alignItems: 'center' },

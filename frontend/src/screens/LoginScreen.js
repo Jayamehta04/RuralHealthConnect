@@ -71,7 +71,7 @@ const LoginScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#fff' },
   header: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, color: '#2c3e50' },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 10, marginBottom: 15 },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 10, marginBottom: 15, color: '#000' },
   button: { backgroundColor: '#3498db', padding: 15, borderRadius: 10, alignItems: 'center' },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' }
 });
