@@ -101,5 +101,3 @@ npx expo start
 
 ---
 
-## 👨‍💻 Developer
-Developed by **Jaya Mehta**.
